@@ -1,3 +1,8 @@
+class Operator(Enum):
+    AND
+    OR
+    NOT
+
 class Node:
 
     def __init__(self):

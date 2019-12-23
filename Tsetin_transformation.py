@@ -19,7 +19,7 @@ class TsetinTransformation:
         negY =
 
 
-
+#TODO: From Iff to CNF.
 
 
 

@@ -6,18 +6,21 @@ class CNF_formula:
 
 
     def append(self, y):
-        self.f.add(y)
-
-
-
-
+        self.f.add(y)    
+    
+class Sign(Enum):
+        POS = True
+        NEG = False
+        
 class Literal:
+        
     def __init__(self, y, sign):
         self.x = y
-        if (sign == 0):
-            self.sgn = False
+        if (sign == NEG):
+            self.sgn = NEG
         else:
-            self.sgn = True
+            self.sgn = POS
+        
 
 
 class Clause:
