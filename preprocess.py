@@ -17,8 +17,8 @@ def remove_redundant_clauses(formula):
             formula_copy.remove(clause)            
         else :
             for lit_comb in combinations(clause,2):
-            l1,l2 = lit_comb
-            if l1 == -l2:
-                formula_copy.remove(clause)
+                l1,l2 = lit_comb
+                if l1 == -l2:
+                    formula_copy.remove(clause)
     return formula_copy                                              
     

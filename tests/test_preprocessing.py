@@ -14,6 +14,8 @@ c1 = Clause()
 c2 = Clause()
 c3 = Clause()
 c4 = Clause()
+c5 = Clause()
+c6 = Clause()
 for i in {1,2,3}:
     c1.append(Literal(i))
     c2.append(Literal(i))
@@ -26,6 +28,8 @@ f.append(c1)
 f.append(c2)
 f.append(c3)
 f.append(c4)
+f.append(c5)
+f.append(c6)
 
 f_pp = remove_redundant_clauses(f)
 

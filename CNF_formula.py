@@ -38,6 +38,9 @@ class CNF_formula:
             out = out + "<" + str(c) + ">"
         out = out + ")"
         return out
+        
+    def __len__(self):
+        return len(self.f)
     
 class Sign(enum.Enum):
     
@@ -118,4 +121,7 @@ class Clause:
         for i,l in enumerate(self.c):
             out = out + str(l) + ("," if i < (len(self.c) - 1) else "")
         return out 
+    
+    def __len__(self):
+        return len(self.c)
             
