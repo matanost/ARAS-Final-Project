@@ -3,11 +3,11 @@ import enum
 
 class CNF_formula:
     def __init__(self):
-        self.f = set()
+        self.f = list()
         self.num_clause = 0
 
     def append(self, y):
-        self.f.add(y)
+        self.f.append(y)
         self.num_clause += 1
 
     def remove(self, c):
@@ -48,9 +48,9 @@ class Sign(enum.Enum):
             return self.value
 
         def __neg__(self):
-            if self.value == Sign.NEG.value:
+            if self == Sign.NEG:
                 return Sign.POS
-            elif self.value == Sign.POS.value:
+            elif self == Sign.POS:
                 return Sign.NEG
             else:
                 raise Exception("Comparison problem enum={}".format(self.value))
