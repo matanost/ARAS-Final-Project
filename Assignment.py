@@ -1,5 +1,5 @@
 
-from CNF_formula import Literal
+from CNF_formula import Literal, Sign
     
 class Assignment:
 
@@ -30,22 +30,39 @@ class Assignment:
         
     @classmethod
     def get_unassigned(self, clause):
-        return [l for l in clause if l.x not in self.variable_assignments] #Assume no clause contains a literal and its negation.
-    
+        return [l for l in clause if l.x not in self.variable_assignments] #Assume no clause contains a literal and its negation.   
+        
+    @classmethod
+    def satisfy_clause(self, clause):
+        self.clause_satisfied.add(clause)
+        self.watch_literals.pop(clause)
+        if clause in self.bcp_eligible:
+            self.bcp_eligible.remove(clause)
+            
+    @classmethod
+    def is_clause_satisfied(self, clause):
+        for l in clause:
+            if l.x in self.variable_assignments:
+                if self.variable_assignments[l.x]["value"] == l.sgn:
+                    return True
+        return False
+        
     @classmethod    
     def find_watch_literals(self, clause):
         unassigned = self.get_unassigned(clause)
-        return unassigned if len(unassigned) < 2 else unassigned[0:1]  
+        return unassigned if len(unassigned) < 2 else unassigned[:2]  
     
     @classmethod
-    def update_watch_literals_clause(self, clause):
+    def update_clause_state(self, clause):
+        if clause in self.clause_satisfied:
+            return
         if clause not in self.watch_literals:
-            self.watch_literals[clause] = []       
+            self.watch_literals[clause] = []
         if all([(l.x not in self.variable_assignments) for l in self.watch_literals[clause]]) and self.watch_literals[clause]:
-            return        
-        watch_literals = self.find_watch_literals(clause)
-        if len(watch_literals) == 0:
-            self.clause_satisfied.add(clause)                       
+            return
+        watch_literals = self.find_watch_literals(clause)       
+        if len(watch_literals) == 0:            
+            self.satisfy_clause(clause)
         elif len(watch_literals) == 1:
             self.bcp_eligible.add(clause)
             self.watch_literals[clause] = watch_literals
@@ -53,24 +70,31 @@ class Assignment:
             self.watch_literals[clause] = watch_literals
             
     @classmethod
-    def update_watch_literals_formula(self):
+    def update_formula_state(self):
         for clause in self.clauses:
             if clause not in self.clause_satisfied:
-                self.update_watch_literals_clause(clause)
+                self.update_clause_state(clause)
             
     @classmethod
     def unassign_variable(self, var):
         if var not in self.variable_assignments:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
+        #TODO need to erase all assignment with bigger level than Var, maybe even the equal one?
+        for clause in self.containing_clauses[var]:
+            if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
+                self.clause_satisfied.remove(clause)
+            self.update_clause_state(clause)
         
     @classmethod
     def assign_variable(self, var, value):
         if var in self.variable_assignments:
             raise Exception("Attempt to assign assigned variable {}".format(var))
-        self.variable_assignments[var] = {"value" : value, "level" : self.level}
-        for clause in self.containing_clauses[var]:            
-            self.update_watch_literals_clause(clause)
+        self.variable_assignments[var] = {"value" : value, "level" : self.level}        
+        for clause in self.containing_clauses[var]:
+            if Literal(var,Sign.POS if value else Sign.NEG) in clause:
+                self.satisfy_clause(clause)
+            self.update_clause_state(clause)
 
     @classmethod    
     def bcp_iteration(self):
@@ -82,9 +106,7 @@ class Assignment:
         unassigned_literal = self.watch_literals[clause].pop()
         if unassigned_literal.x in self.variable_assignments:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
-        self.assign_variable(unassigned_literal.x, bool(unassigned_literal.sgn)) #TODO propegate the assignment to other clauses and check conflicts.
-        self.clause_satisfied.add(clause)
-        self.watch_literals.pop(clause)
+        self.assign_variable(unassigned_literal.x, bool(unassigned_literal.sgn)) #TODO check conflicts.        
     
     @classmethod    
     def is_bcp_eligible(self):
@@ -106,11 +128,19 @@ class Assignment:
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()
-        self.update_watch_literals_formula()
+        self.update_formula_state()
         
+    @classmethod
     def __str__(self):
-        out = ""
+        out = "\nAssigned Variables:"
         for var in self.variables:
             if var in self.variable_assignments:
                 out += "<{}{}:{}>".format(("" if self.variable_assignments[var]["value"] else "-"), var, self.variable_assignments[var]["level"])
+        out += "\n"
+        out += "Satisfied Clauses: {}\n".format([self.clauses.index(c)+1 for c in self.clause_satisfied])
+        out += "BCP eligible clauses: {}\n".format([self.clauses.index(c)+1 for c in self.bcp_eligible])
+        out += "Watch Literals:"
+        for clause, literals in self.watch_literals.items():
+            out += "<c={}, {}>".format(self.clauses.index(clause)+1, [str(l) for l in literals])
+        out += "\n"
         return out
