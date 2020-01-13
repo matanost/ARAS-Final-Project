@@ -1,5 +1,6 @@
 
 from CNF_formula import Literal, Sign
+from ConflictAnalysis import impGraph
     
 class Assignment:
 
@@ -30,11 +31,28 @@ class Assignment:
     def find_pure_literals(formula):
         literals = Assignment.get_literals(formula)
         return set([l for l in literals if -l not in literals])
+
+    @staticmethod
+    def resolve_clauses(c1, c2, lit):
+        resolving_lit = None
+        if (lit in c1) and (-lit in c2):
+            pos = c1
+            neg = c2
+        elif (lit in c2) and (-lit in c1):
+            pos = c2
+            neg = c1
+        else:
+            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))
+        pos.remove(lit)
+        neg.remove(-lit)
+        for l in c2:
+            c1.add(l)
+        return c1
         
     @classmethod
     def plp_iteration(self):        
         for l in Assignment.find_pure_literals(self.formula):
-            self.assign_variable(l.x,bool(l.sgn))            
+            self.deduct(l)         
         
     @classmethod
     def get_unassigned(self, clause):
@@ -114,7 +132,18 @@ class Assignment:
         unassigned_literal = self.watch_literals[clause].pop()
         if unassigned_literal.x in self.variable_assignments:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
-        self.assign_variable(unassigned_literal.x, bool(unassigned_literal.sgn)) #TODO check conflicts.        
+        self.deduct(unassigned_literal)        
+
+    @classmethod
+    def decide(self, literal):
+        self.level += 1
+        self.imp_graph.add_root(literal, self.level)
+        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
+
+    @classmethod
+    def deduct(self, literal):
+        self.imp_graph.add_literal(literal, self.level)
+        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.        
     
     @classmethod    
     def is_bcp_eligible(self):
@@ -137,6 +166,7 @@ class Assignment:
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()
         self.update_formula_state()
+        self.imp_graph = impGraph(self.formula)
         
     @classmethod
     def __str__(self):

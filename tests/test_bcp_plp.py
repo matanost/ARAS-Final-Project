@@ -5,7 +5,7 @@ sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
 
-from preprocess import remove_redundant_clauses
+from Preprocess import remove_redundant_clauses
 from CNF_formula import CNF_formula, Clause, Literal
 from Assignment import Assignment
 
