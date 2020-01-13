@@ -3,6 +3,14 @@ from CNF_formula import Literal, Sign
     
 class Assignment:
 
+    '''
+    Data Structures:
+    variable_assignments : dict from variables to dict {"value","level"}
+    bcp_eligible : set of clauses with a single unassigned watch literal.
+    clause_satisfied : set containing cluase iff it is satisfied by current assignment.
+    watch_literals : dict from clauses to literal lists.
+    '''
+    
     @staticmethod
     def get_literals(formula):
         literals = set()
