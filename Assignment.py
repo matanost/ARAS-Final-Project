@@ -48,6 +48,10 @@ class Assignment:
         for l in c2:
             c1.add(l)
         return c1
+
+    @classmethod
+    def get_literal(self, var):
+        Literal(var,Sign.POS if self.variable_assignments[var]["value"] else Sign.NEG)
         
     @classmethod
     def plp_iteration(self):        
@@ -102,16 +106,16 @@ class Assignment:
                 self.update_clause_state(clause)
 
     @classmethod
-    #Return i iff this variable is the i-th variable to be assigned.
-    def get_assignment_index(self, var):
-        return self.variable_assignments_ordered.index(var)
+    #Return i iff this literal is the i-th literal to be assigned.
+    def get_assignment_index(self, literal):
+        return self.imp_graph.literal_assignments_ordered.index(literal)
         
     @classmethod
     def unassign_variable(self, var):
         if var not in self.variable_assignments:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
-        self.variable_assignments_ordered.remove(var)
+        self.imp_graph.literal_assignments_ordered.remove(self.get_literal(var))
         #TODO need to erase all assignment with bigger level than Var, maybe even the equal one?
         for clause in self.containing_clauses[var]:
             if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
@@ -123,9 +127,9 @@ class Assignment:
         if var in self.variable_assignments:
             raise Exception("Attempt to assign assigned variable {}".format(var))
         self.variable_assignments[var] = {"value" : value, "level" : self.level}
-        self.variable_assignments_ordered.append(var)
+        self.imp_graph.literal_assignments_ordered.append(self.get_literal(var))
         for clause in self.containing_clauses[var]:
-            if Literal(var,Sign.POS if value else Sign.NEG) in clause:
+            if self.get_literal(var) in clause:
                 self.satisfy_clause(clause)
             self.update_clause_state(clause)
 
@@ -169,7 +173,6 @@ class Assignment:
                 if l in clause:                
                     self.containing_clauses[l.x].append(clause)                    
         self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
-        self.variable_assignments_ordered = list()
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()

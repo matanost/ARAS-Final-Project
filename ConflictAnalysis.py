@@ -107,6 +107,7 @@ class impGraph:
         self.lit_to_node = dict()
         self.conflicts = list()
         self.formula = formula
+        self.literal_assignments_ordered = list()        
 
     def add_root(self, literal, level):
         new_node = impGraph.impNode(impGraph.impNodesTypes.Root, literal, level)
@@ -146,7 +147,7 @@ class impGraph:
         first_uip = find_first_uip(self, root)        
         clause = init_clause
         while -first_uip not in clause:
-            #TODO find last assigned literal.
+            last_assigned_lit = literal_assignments_ordered[-1]
             #TODO find c' that will be called other_clause
             clause = Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)          
         return clause
