@@ -100,12 +100,18 @@ class Assignment:
         for clause in self.clauses:
             if clause not in self.clause_satisfied:
                 self.update_clause_state(clause)
-            
+
+    @classmethod
+    #Return i iff this variable is the i-th variable to be assigned.
+    def get_assignment_index(self, var):
+        return self.variable_assignments_ordered.index(var)
+        
     @classmethod
     def unassign_variable(self, var):
         if var not in self.variable_assignments:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
+        self.variable_assignments_ordered.remove(var)
         #TODO need to erase all assignment with bigger level than Var, maybe even the equal one?
         for clause in self.containing_clauses[var]:
             if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
@@ -116,7 +122,8 @@ class Assignment:
     def assign_variable(self, var, value):
         if var in self.variable_assignments:
             raise Exception("Attempt to assign assigned variable {}".format(var))
-        self.variable_assignments[var] = {"value" : value, "level" : self.level}        
+        self.variable_assignments[var] = {"value" : value, "level" : self.level}
+        self.variable_assignments_ordered.append(var)
         for clause in self.containing_clauses[var]:
             if Literal(var,Sign.POS if value else Sign.NEG) in clause:
                 self.satisfy_clause(clause)
@@ -161,7 +168,8 @@ class Assignment:
             for clause in self.clauses:
                 if l in clause:                
                     self.containing_clauses[l.x].append(clause)                    
-        self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}        
+        self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
+        self.variable_assignments_ordered = list()
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()
