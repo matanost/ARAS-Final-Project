@@ -22,6 +22,8 @@ class CNF_formula:
         return self.f.__next__()
 
     def __eq__(self,other):
+        if not isinstance(other, CNF_formula):
+            return False
         if len(self.f) != len(other.f):
             return False
         for c, co in zip(self.f, other.f):
@@ -69,6 +71,8 @@ class Literal:
             self.sgn = sign
 
     def __eq__(self, other):
+        #if not isinstance(other, Literal):
+        #    return False
         return (self.x == other.x) and (self.sgn == other.sgn)
 
     def __ne__(self, other):
@@ -108,6 +112,8 @@ class Clause:
             self.num_literal -= 1
 
     def __eq__(self, other):
+        if not isinstance(other, Clause):
+            return False
         return self.c == other
 
     def __ne__(self, other):
@@ -117,9 +123,10 @@ class Clause:
         return hash(self.c)
 
     def __str__(self):
-        out = ""
+        out = "{{"
         for i,l in enumerate(self.c):
-            out = out + str(l) + ("," if i < (len(self.c) - 1) else "")
+            out += str(l) + ("," if i < (len(self.c) - 1) else "")
+        out += "}}"
         return out 
     
     def __len__(self):

@@ -51,12 +51,14 @@ class Assignment:
 
     @classmethod
     def get_literal(self, var):
-        Literal(var,Sign.POS if self.variable_assignments[var]["value"] else Sign.NEG)
+        if var not in self.variable_assignments:
+            raise Exception("Attempt to get value of unassigned variable".format(var))
+        return Literal(var,Sign.POS if self.variable_assignments[var]["value"] else Sign.NEG)
         
     @classmethod
     def plp_iteration(self):        
         for l in Assignment.find_pure_literals(self.formula):
-            self.deduct(l)         
+            self.deduce(l)         
         
     @classmethod
     def get_unassigned(self, clause):
@@ -125,7 +127,7 @@ class Assignment:
     @classmethod
     def assign_variable(self, var, value):
         if var in self.variable_assignments:
-            raise Exception("Attempt to assign assigned variable {}".format(var))
+            raise Exception("Attempt to assign assigned variable {}:{},{}".format(var,self.variable_assignments[var]["value"],self.variable_assignments[var]["level"]))
         self.variable_assignments[var] = {"value" : value, "level" : self.level}
         self.imp_graph.literal_assignments_ordered.append(self.get_literal(var))
         for clause in self.containing_clauses[var]:
@@ -143,7 +145,7 @@ class Assignment:
         unassigned_literal = self.watch_literals[clause].pop()
         if unassigned_literal.x in self.variable_assignments:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
-        self.deduct(unassigned_literal)        
+        self.deduce(unassigned_literal, clause)        
 
     @classmethod
     def decide(self, literal):
@@ -152,9 +154,14 @@ class Assignment:
         self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
 
     @classmethod
-    def deduct(self, literal):
+    def deduce(self, literal, clause=None):
         self.imp_graph.add_literal(literal, self.level)
-        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.        
+        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
+        if clause is not None:
+            for lit in clause:
+                if lit != literal and lit.x in self.variable_assignments:
+                    self.imp_graph.add_edge(-lit, clause, literal)
+
     
     @classmethod    
     def is_bcp_eligible(self):
@@ -192,4 +199,5 @@ class Assignment:
         for clause, literals in self.watch_literals.items():
             out += "<c={}, {}>".format(self.clauses.index(clause)+1, [str(l) for l in literals])
         out += "\n"
+        out += str(self.imp_graph)
         return out
