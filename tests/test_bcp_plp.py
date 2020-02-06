@@ -8,9 +8,9 @@ sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
 from Preprocess import remove_redundant_clauses
 from CNF_formula import CNF_formula, Clause, Literal
 from Assignment import Assignment
-
+from ConflictAnalysis import impGraph, impNode
 f = CNF_formula()
-
+    
 c1 = Clause()
 c2 = Clause()
 c3 = Clause()

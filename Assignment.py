@@ -49,29 +49,24 @@ class Assignment:
             c1.add(l)
         return c1
 
-    @classmethod
     def get_literal(self, var):
         if var not in self.variable_assignments:
             raise Exception("Attempt to get value of unassigned variable".format(var))
         return Literal(var,Sign.POS if self.variable_assignments[var]["value"] else Sign.NEG)
         
-    @classmethod
     def plp_iteration(self):        
         for l in Assignment.find_pure_literals(self.formula):
             self.deduce(l)         
         
-    @classmethod
     def get_unassigned(self, clause):
         return [l for l in clause if l.x not in self.variable_assignments] #Assume no clause contains a literal and its negation.   
         
-    @classmethod
     def satisfy_clause(self, clause):
         self.clause_satisfied.add(clause)
         self.watch_literals.pop(clause)
         if clause in self.bcp_eligible:
             self.bcp_eligible.remove(clause)
             
-    @classmethod
     def is_clause_satisfied(self, clause):
         for l in clause:
             if l.x in self.variable_assignments:
@@ -79,12 +74,10 @@ class Assignment:
                     return True
         return False
         
-    @classmethod    
     def find_watch_literals(self, clause):
         unassigned = self.get_unassigned(clause)
         return unassigned if len(unassigned) < 2 else unassigned[:2]  
     
-    @classmethod
     def update_clause_state(self, clause):
         if clause in self.clause_satisfied:
             return
@@ -101,18 +94,15 @@ class Assignment:
         else : 
             self.watch_literals[clause] = watch_literals
             
-    @classmethod
     def update_formula_state(self):
         for clause in self.clauses:
             if clause not in self.clause_satisfied:
                 self.update_clause_state(clause)
 
-    @classmethod
     #Return i iff this literal is the i-th literal to be assigned.
     def get_assignment_index(self, literal):
         return self.imp_graph.literal_assignments_ordered.index(literal)
         
-    @classmethod
     def unassign_variable(self, var):
         if var not in self.variable_assignments:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
@@ -124,7 +114,6 @@ class Assignment:
                 self.clause_satisfied.remove(clause)
             self.update_clause_state(clause)
         
-    @classmethod
     def assign_variable(self, var, value):
         if var in self.variable_assignments:
             raise Exception("Attempt to assign assigned variable {}:{},{}".format(var,self.variable_assignments[var]["value"],self.variable_assignments[var]["level"]))
@@ -135,7 +124,6 @@ class Assignment:
                 self.satisfy_clause(clause)
             self.update_clause_state(clause)
 
-    @classmethod    
     def bcp_iteration(self):
         if not self.bcp_eligible:
             return
@@ -147,13 +135,11 @@ class Assignment:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
         self.deduce(unassigned_literal, clause)        
 
-    @classmethod
     def decide(self, literal):
         self.level += 1
         self.imp_graph.add_root(literal, self.level)
         self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
 
-    @classmethod
     def deduce(self, literal, clause=None):
         self.imp_graph.add_literal(literal, self.level)
         self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
@@ -163,11 +149,9 @@ class Assignment:
                     self.imp_graph.add_edge(-lit, clause, literal)
 
     
-    @classmethod    
     def is_bcp_eligible(self):
         return self.bcp_eligible
 
-    @classmethod
     def __init__(self, formula):
         self.level = 0
         self.formula = formula
@@ -186,7 +170,6 @@ class Assignment:
         self.update_formula_state()
         self.imp_graph = impGraph(self.formula)
         
-    @classmethod
     def __str__(self):
         out = "\nAssigned Variables:"
         for var in self.variables:
