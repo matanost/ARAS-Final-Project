@@ -24,7 +24,7 @@ class impGraph:
             self.outgoing = []
 
         def __eq__(self,other):
-            if not isinstance(other, impNode):
+            if not isinstance(other, impGraph.impNode):
                 return False
             return (self.type == other.type) and (self.literal == other.literal) and (self.level == other.level) and (self.ingoing == other.ingoing) and (self.outgoing == other.outgoing)
 
@@ -48,7 +48,7 @@ class impGraph:
             self.target = target
         
         def __eq__(self,other):
-            if not isinstance(other, impEdge):
+            if not isinstance(other, impGraph.impEdge):
                 return False
             return (self.clause == other.clause) and (self.source == other.source) and (self.target == other.target)
                 
@@ -63,7 +63,7 @@ class impGraph:
         if len(graph.nodes) == 0:
             return True
         stopping_depth = len(graph.nodes) + 1
-        visited = set()
+        #visited = set()
         to_visit = [(r,0) for r in graph.roots]
         while to_visit:
             node, depth = to_visit.pop(0)
@@ -71,7 +71,7 @@ class impGraph:
                 continue
             if depth == stopping_depth:
                 return False
-            visited.add(node)
+            #visited.add(node)
             for edge in node.outgoing():
                 to_visit.append((edge.target, depth + 1))
         return True
@@ -81,16 +81,16 @@ class impGraph:
         if len(graph.nodes) == 0:
             return False
         stopping_depth = len(graph.nodes) + 1
-        visited = set()
+        #visited = set()
         to_visit = [(s,0)]
         while to_visit:
             node, depth = to_visit.pop(0)
-            if len(node.outgoing()) == 0:
+            if len(node.outgoing) == 0:
                 continue
             if depth == stopping_depth:
                 continue
-            visited.add(node)
-            for edge in node.outgoing():
+            #visited.add(node)
+            for edge in node.outgoing:
                 if edge.target == t:
                     return (True, depth+1)
                 to_visit.append((edge.target, depth + 1))
@@ -101,14 +101,14 @@ class impGraph:
         if not graph.conflicts:
             return None
         conflict = graph.conflicts[0]
-        root_dist = is_reachable(graph, root, conflict)[1]
+        root_dist = impGraph.is_reachable(graph, root, conflict)[1]
         first_uip = {"node":root, "dist_from_conflict" : root_dist}
         for n in graph.nodes:
             graph_copy = copy.deepcopy(graph)
-            graph_copy.remove_nodes(n)
-            is_r, = is_reachable(graph_copy, root, conflict)
+            graph_copy.remove_node(n)
+            is_r, = impGraph.is_reachable(graph_copy, root, conflict)
             if not is_r:
-                dist = is_reachable(graph_copy, n, conflict)[1]
+                dist = impGraph.is_reachable(graph_copy, n, conflict)[1]
                 if dist < first_uip["dist_from_conflict"]:
                     first_uip = {"node":root, "dist_from_conflict" : root_dist}
         return first_uip["node"].literal
@@ -161,20 +161,29 @@ class impGraph:
         self.add_edge_internal(source_node, clause, target_node)
 
     def remove_node(self, node):
-        for e in node.outgoing():
+        for e in node.outgoing:
             e.target.ingoing.remove(e)
             self.edges.remove(e)
-        for e in node.ingoing():
+        for e in node.ingoing:
             e.target.outgoing.remove(e)            
             self.edges.remove(e)
-        self.nodes.remove(node)           
+        self.nodes.remove(node)
 
-    def explain(init_clause, root):
-        first_uip = find_first_uip(self, root)        
+    def remove_conflicts(self):
+        for conflict in self.conflicts:
+            self.remove_node(conflict)
+
+    def explain(self, init_clause, last_decision):
+        root = self.get_node(last_decision)
+        first_uip = impGraph.find_first_uip(self, root)        
         clause = init_clause
         while -first_uip not in clause:
-            last_assigned_lit = literal_assignments_ordered[-1]
-            #TODO find c' that will be called other_clause
+            for lit in reversed(literal_assignments_ordered):
+                if -lit in clause:
+                    last_assigned_lit = lit
+                    break
+            if self.get_node(lit).ingoing:
+                other_clause = self.get_node(lit).ingoing[0]
             clause = Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)          
         return clause
       

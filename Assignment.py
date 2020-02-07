@@ -72,7 +72,9 @@ class Assignment:
         self.watch_literals.pop(clause)
         if clause in self.bcp_eligible:
             self.bcp_eligible.remove(clause)
-            
+        if len(self.clause_satisfied) == len(self.formula):
+            self.set_sat()
+        
     def is_clause_satisfied(self, clause):
         for l in clause:
             if l.x in self.variable_assignments:
@@ -97,7 +99,7 @@ class Assignment:
                 if self.variable_assignments[l.x]["value"] == l.sgn:
                     self.satisfy_clause(clause)
                     return
-            self.conflict(clause)
+            self.conflict_found(clause)
         elif len(watch_literals) == 1:
             self.bcp_eligible.add(clause)
             self.watch_literals[clause] = watch_literals
@@ -118,6 +120,7 @@ class Assignment:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
         self.imp_graph.literal_assignments_ordered.remove(self.get_literal(var))
+        self.imp_graph.remove_node(self.imp_graph.get_node(self.get_literal(var)))
         #TODO need to erase all assignment with bigger level than Var, maybe even the equal one?
         for clause in self.containing_clauses[var]:
             if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
@@ -145,16 +148,38 @@ class Assignment:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
         self.deduce(unassigned_literal, clause)        
 
-    def conflict(self, conflicting_clause):
+    def conflict_found(self, conflicting_clause):
         print("Found conflict in clause" + str(conflicting_clause)) #FIXME
         self.imp_graph.add_conflict()
         for lit in conflicting_clause:
             self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
-        self.is_conflict = True
+        self.conflict = conflicting_clause
+        self.resolve_conflict()
         
+    def backjump(self, level):
+        for lit in reversed(self.imp_graph.literal_assignments_ordered):
+            if self.variable_assignments[lit.x]["level"] > level:
+                self.unassign_variable(lit.x)
+        
+    def resolve_conflict(self):
+        learnt_conflict = self.imp_graph.explain(self.conflict, self.last_decision)
+        self.imp_graph.remove_conflicts()
+        levels = set([self.variable_assignments[lit.x]["level"] for literal in learnt_conflict])
+        if len(levels) == 1:
+            if levels.pop() == 0:
+                self.set_unsat()
+                return
+            else:
+                backjump_level = 0
+        else :
+            levels.remove(max(levels))
+            backjump_level = max(levels)
+        self.backjump(backjump_level)
+    
     def decide(self, literal):
         self.level += 1
         self.imp_graph.add_root(literal, self.level)
+        self.last_decision = literal
         self.assign_variable(literal.x, bool(literal.sgn))
 
     def deduce(self, literal, clause=None):
@@ -165,12 +190,20 @@ class Assignment:
                     self.imp_graph.add_edge(-lit, clause, literal)
         self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
 
-    def find_best_decision(self):
-        pass
-        #max([lit, len(clauses) for lit, clauses in self.containing_clauses_literals.items()],key=(lambda item:item[1]))
+    def get_decision(self):
+        num_clauses = [tuple(l, len([c for c in self.containing_clauses_literals[l] if c not in self.clause_satisfied])) for l in self.literals]
+        max_index, (lit, num_c) = max(enumerate(num_clauses), key=lambda tup: tup[1][1])
+        return num_clauses[max_index][0]
+        
         
     def is_bcp_eligible(self):
         return self.bcp_eligible
+        
+    def set_sat(self):
+        self.SAT = True
+        
+    def set_unsat(self):
+        self.UNSAT = True
 
     def __init__(self, formula):
         self.level = 0
@@ -184,14 +217,17 @@ class Assignment:
             for clause in self.clauses:
                 if l in clause:                
                     self.containing_clauses[l.x].append(clause)   
-                    self.containing_clauses_literals[l].append(clause)   
+                    self.containing_clauses_literals[l].append(clause) 
         self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()
         self.update_formula_state()
         self.imp_graph = impGraph(self.formula)
-        self.is_conflict = False
+        self.conflict = None
+        self.SAT = False
+        self.UNSAT = False
+        self.last_decision = None
         
     def __str__(self):
         out = "\nAssigned Variables:"
@@ -199,7 +235,7 @@ class Assignment:
             if var in self.variable_assignments:
                 out += "<{}{}:{}>".format(("" if self.variable_assignments[var]["value"] else "-"), var, self.variable_assignments[var]["level"])
         out += "\n"
-        out +=  "Status:" + ("Conflict" if self.is_conflict else "No Conflict") + "\n"
+        out +=  "Status:" + ("Conflict" if self.conflict else "No Conflict") + "\n"
         out += "Satisfied Clauses: {}\n".format([self.clauses.index(c)+1 for c in self.clause_satisfied])
         out += "BCP eligible clauses: {}\n".format([self.clauses.index(c)+1 for c in self.bcp_eligible])
         out += "Watch Literals:"
@@ -208,3 +244,17 @@ class Assignment:
         out += "\n"
         out += str(self.imp_graph)
         return out
+    
+    @staticmethod
+    def sat_solve(formula):
+        a = Assignment(f)
+        while not a.SAT and not a.UNSAT:
+            while a.is_bcp_eligible():
+                a.bcp_iteration()
+            a.decide(a.get_decision())
+        if a.SAT:
+            return True, [Literal(var,self.variable_assignments[var]["value"]) for var in self.variables]
+        #a.UNSAT:
+        return False, None
+        
+        

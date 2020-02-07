@@ -37,7 +37,7 @@ print("Initial Assignment:{}".format(a))
 a.decide(Literal(1))
 print("Assignment after decision:{}".format(a))
 
-while a.is_bcp_eligible() and not a.is_conflict:
+while a.is_bcp_eligible() and not a.conflict:
     a.bcp_iteration()
     print("Assignment after BCP iteration:{}".format(a))
     
