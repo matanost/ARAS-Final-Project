@@ -16,13 +16,13 @@ c2 = Clause()
 c3 = Clause()
 c4 = Clause()
     
-for i in {1,-4}:
+for i in {-1,3}:
     c1.append(Literal(i))
-for i in {2}:
+for i in {-3,-1,2}:
     c2.append(Literal(i))
-for i in {-2,3}:
+for i in {-3,4}:
     c3.append(Literal(i))
-for i in {-2,-3,4}:
+for i in {-4,-2}:
     c4.append(Literal(i))
     
 f.append(c1)
@@ -34,10 +34,11 @@ print("Original formula={}\n".format(f))
 a = Assignment(f)
 print("Initial Assignment:{}".format(a))
 
-a.plp_iteration()
-print("Assignment after PLP:{}".format(a))
+a.decide(Literal(1))
+print("Assignment after decision:{}".format(a))
 
-while a.is_bcp_eligible():
+while a.is_bcp_eligible() and not a.is_conflict:
     a.bcp_iteration()
     print("Assignment after BCP iteration:{}".format(a))
+    
 print("Final Assignment:{}\n".format(a))

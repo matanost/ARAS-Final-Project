@@ -9,6 +9,9 @@ class CNF_formula:
     def append(self, y):
         self.f.append(y)
         self.num_clause += 1
+        
+    def index(self, c):
+        return self.f.index(c)
 
     def remove(self, c):
         if c in self.f:

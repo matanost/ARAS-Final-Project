@@ -16,8 +16,15 @@ class Assignment:
     def get_literals(formula):
         literals = set()
         for clause in formula:
-                for l in clause:
-                    literals.add(l)
+            for literal in clause:
+                literals.add(literal)
+        return literals
+        
+    def get_pure_literals(self, formula):
+        literals = set()
+        for clause in [c for c in formula if c not in self.clause_satisfied]:
+            for literal in clause:
+                literals.add(literal)
         return literals
          
     @staticmethod
@@ -27,9 +34,8 @@ class Assignment:
             variables.add(l.x)
         return variables
 
-    @staticmethod
-    def find_pure_literals(formula):
-        literals = Assignment.get_literals(formula)
+    def find_pure_literals(self, formula):
+        literals = self.get_pure_literals(formula)
         return set([l for l in literals if -l not in literals])
 
     @staticmethod
@@ -55,11 +61,11 @@ class Assignment:
         return Literal(var,Sign.POS if self.variable_assignments[var]["value"] else Sign.NEG)
         
     def plp_iteration(self):        
-        for l in Assignment.find_pure_literals(self.formula):
+        for l in self.find_pure_literals(self.formula):
             self.deduce(l)         
         
     def get_unassigned(self, clause):
-        return [l for l in clause if l.x not in self.variable_assignments] #Assume no clause contains a literal and its negation.   
+        return [l for l in clause if l.x not in self.variable_assignments]
         
     def satisfy_clause(self, clause):
         self.clause_satisfied.add(clause)
@@ -86,8 +92,12 @@ class Assignment:
         if all([(l.x not in self.variable_assignments) for l in self.watch_literals[clause]]) and self.watch_literals[clause]:
             return
         watch_literals = self.find_watch_literals(clause)       
-        if len(watch_literals) == 0:            
-            self.satisfy_clause(clause)
+        if len(watch_literals) == 0:
+            for l in self.watch_literals[clause]:
+                if self.variable_assignments[l.x]["value"] == l.sgn:
+                    self.satisfy_clause(clause)
+                    return
+            self.conflict(clause)
         elif len(watch_literals) == 1:
             self.bcp_eligible.add(clause)
             self.watch_literals[clause] = watch_literals
@@ -135,20 +145,30 @@ class Assignment:
             raise Exception("Variable {} was watch literal for clause {} but is assigned".format(unassigned_literal.x, clause))
         self.deduce(unassigned_literal, clause)        
 
+    def conflict(self, conflicting_clause):
+        print("Found conflict in clause" + str(conflicting_clause)) #FIXME
+        self.imp_graph.add_conflict()
+        for lit in conflicting_clause:
+            self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
+        self.is_conflict = True
+        
     def decide(self, literal):
         self.level += 1
         self.imp_graph.add_root(literal, self.level)
-        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
+        self.assign_variable(literal.x, bool(literal.sgn))
 
     def deduce(self, literal, clause=None):
         self.imp_graph.add_literal(literal, self.level)
-        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
         if clause is not None:
             for lit in clause:
                 if lit != literal and lit.x in self.variable_assignments:
                     self.imp_graph.add_edge(-lit, clause, literal)
+        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
 
-    
+    def find_best_decision(self):
+        pass
+        #max([lit, len(clauses) for lit, clauses in self.containing_clauses_literals.items()],key=(lambda item:item[1]))
+        
     def is_bcp_eligible(self):
         return self.bcp_eligible
 
@@ -158,17 +178,20 @@ class Assignment:
         self.variables = Assignment.get_variables(formula)
         self.literals = Assignment.get_literals(formula)
         self.clauses = [clause for clause in self.formula]                
-        self.containing_clauses = {v : [] for v in self.variables}        
+        self.containing_clauses = {v : [] for v in self.variables}  
+        self.containing_clauses_literals = {l : [] for l in self.literals}        
         for l in self.literals:
             for clause in self.clauses:
                 if l in clause:                
-                    self.containing_clauses[l.x].append(clause)                    
+                    self.containing_clauses[l.x].append(clause)   
+                    self.containing_clauses_literals[l].append(clause)   
         self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
         self.bcp_eligible = set()
         self.update_formula_state()
         self.imp_graph = impGraph(self.formula)
+        self.is_conflict = False
         
     def __str__(self):
         out = "\nAssigned Variables:"
@@ -176,6 +199,7 @@ class Assignment:
             if var in self.variable_assignments:
                 out += "<{}{}:{}>".format(("" if self.variable_assignments[var]["value"] else "-"), var, self.variable_assignments[var]["level"])
         out += "\n"
+        out +=  "Status:" + ("Conflict" if self.is_conflict else "No Conflict") + "\n"
         out += "Satisfied Clauses: {}\n".format([self.clauses.index(c)+1 for c in self.clause_satisfied])
         out += "BCP eligible clauses: {}\n".format([self.clauses.index(c)+1 for c in self.bcp_eligible])
         out += "Watch Literals:"

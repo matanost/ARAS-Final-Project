@@ -4,25 +4,6 @@ from CNF_formula import CNF_formula, Literal, Sign
 import enum
 import copy
 
-class impNode:
-
-    def __init__(self, node_type, literal, level):
-        self.type = node_type
-        self.literal = literal        
-        self.level = level
-        self.ingoing = []
-        self.outgoing = []
-
-    def __eq__(self,other):
-        if not isinstance(other, impNode):
-            return False
-        return (self.type == other.type) and (self.literal == other.literal) and (self.level == other.level) and (self.ingoing == other.ingoing) and (self.outgoing == other.outgoing)
-
-    def __ne__(self,other):
-        return not self == other
-    
-    def __str__(self):
-        return str(self.literal) + ":" + str(self.level)
         
 class impGraph:
 
@@ -33,11 +14,36 @@ class impGraph:
         Conflict = enum.auto()
 
 
+    class impNode:
+    
+        def __init__(self, node_type, literal=None, level=None):
+            self.type = node_type
+            self.literal = literal        
+            self.level = level
+            self.ingoing = []
+            self.outgoing = []
+
+        def __eq__(self,other):
+            if not isinstance(other, impNode):
+                return False
+            return (self.type == other.type) and (self.literal == other.literal) and (self.level == other.level) and (self.ingoing == other.ingoing) and (self.outgoing == other.outgoing)
+
+        def __ne__(self,other):
+            return not self == other
+    
+        def __str__(self):
+            if self.type == impGraph.impNodesTypes.Literal:
+                return str(self.literal) + ":" + str(self.level)
+            elif self.type == impGraph.impNodesTypes.Root:
+                return "Root-" + str(self.literal) + ":" + str(self.level)
+            elif self.type == impGraph.impNodesTypes.Conflict:
+                return "Conflict"
 
     class impEdge:
         
-        def __init__(self, clause, source, target):
+        def __init__(self, clause, clause_index ,source, target): #Clause index is passed for easier debug.
             self.clause = clause
+            self.clause_index = clause_index
             self.source = source
             self.target = target
         
@@ -50,7 +56,7 @@ class impGraph:
             return not self == other
             
         def __str__(self):
-            return "<{},{},{}>\n".format(str(self.source),str(self.clause),str(self.target))
+            return "<{},c{},{}>\n".format(str(self.source),str(self.clause_index+1),str(self.target))
             
     @staticmethod
     def is_acyclic(graph):
@@ -120,31 +126,39 @@ class impGraph:
         self.literal_assignments_ordered = list()        
 
     def add_root(self, literal, level):
-        new_node = impNode(self.impNodesTypes.Root, literal, level)
+        new_node = impGraph.impNode(self.impNodesTypes.Root, literal=literal, level=level)
         self.nodes.append(new_node)
         self.roots.append(new_node)
         self.lit_to_node[literal] = new_node
 
     def add_literal(self, literal, level):
-        new_node = impNode(self.impNodesTypes.Literal, literal, level)
+        new_node = impGraph.impNode(self.impNodesTypes.Literal, literal=literal, level=level)
         self.nodes.append(new_node)
         self.lit_to_node[literal] = new_node
 
     def add_conflict(self):
-        new_node = impNode(self.impNodesTypes.Conflict, literal, level)
+        new_node = impGraph.impNode(self.impNodesTypes.Conflict)
         self.nodes.append(new_node)
         self.conflicts.append(new_node)
 
     def get_node(self, literal):
         return self.lit_to_node[literal]
 
-    def add_edge(self, source_lit, clause, target_lit):
-        source_node = self.get_node(source_lit)
-        target_node = self.get_node(target_lit)
-        edge = impGraph.impEdge(clause, source_node, target_node)
+    def add_edge_internal(self, source_node, clause, target_node):
+        edge = impGraph.impEdge(clause, self.formula.index(clause), source_node, target_node)
         self.edges.append(edge)
         source_node.outgoing.append(edge)
         target_node.ingoing.append(edge)
+        
+    def add_edge(self, source_lit, clause, target_lit):
+        source_node = self.get_node(source_lit)
+        target_node = self.get_node(target_lit)
+        self.add_edge_internal(source_node, clause, target_node)
+        
+    def add_edge_to_conflict(self, source_lit, clause):
+        source_node = self.get_node(source_lit)
+        target_node = self.conflicts[-1]
+        self.add_edge_internal(source_node, clause, target_node)
 
     def remove_node(self, node):
         for e in node.outgoing():
@@ -166,6 +180,7 @@ class impGraph:
       
     def __str__(self):
         out = "Implication Graph:\n*******\n"
+        out += "Original formula={}\n".format(self.formula)
         out += "Assignments by order: \n["
         for i,l in enumerate(self.literal_assignments_ordered):
             out += str(l) + ("," if i < (len(self.literal_assignments_ordered) - 1) else "")
@@ -173,8 +188,8 @@ class impGraph:
         out += "Nodes:\n"
         for n in self.nodes:
             out += str(n) + "\n"
-        for n,v in self.lit_to_node.items():
-            out += str(n) + "," + str(v) + "\n"
+        for l,n in self.lit_to_node.items():
+            out += "literal " + str(l) + " mapped to node " + str(n) + "\n"
         out += "Edges:\n"
         for e in self.edges:
             out += str(e)
