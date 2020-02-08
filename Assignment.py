@@ -120,8 +120,7 @@ class Assignment:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
         self.imp_graph.literal_assignments_ordered.remove(self.get_literal(var))
-        self.imp_graph.remove_node(self.imp_graph.get_node(self.get_literal(var)))
-        #TODO need to erase all assignment with bigger level than Var, maybe even the equal one?
+        self.imp_graph.remove_node(self.imp_graph.get_node(self.get_literal(var)))        
         for clause in self.containing_clauses[var]:
             if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
                 self.clause_satisfied.remove(clause)
@@ -188,7 +187,7 @@ class Assignment:
             for lit in clause:
                 if lit != literal and lit.x in self.variable_assignments:
                     self.imp_graph.add_edge(-lit, clause, literal)
-        self.assign_variable(literal.x, bool(literal.sgn)) #TODO check conflicts.
+        self.assign_variable(literal.x, bool(literal.sgn))
 
     def get_decision(self):
         num_clauses = [tuple(l, len([c for c in self.containing_clauses_literals[l] if c not in self.clause_satisfied])) for l in self.literals]

@@ -1,6 +1,6 @@
 
-import Assignment
-from CNF_formula import CNF_formula, Literal, Sign
+import Assignment as A
+from CNF_formula import CNF_formula, Literal, Sign, Clause
 import enum
 import copy
 
@@ -26,7 +26,7 @@ class impGraph:
         def __eq__(self,other):
             if not isinstance(other, impGraph.impNode):
                 return False
-            return (self.type == other.type) and (self.literal == other.literal) and (self.level == other.level) and (self.ingoing == other.ingoing) and (self.outgoing == other.outgoing)
+            return (self.type == other.type) and (self.literal == other.literal) and (self.level == other.level)
 
         def __ne__(self,other):
             return not self == other
@@ -48,9 +48,9 @@ class impGraph:
             self.target = target
         
         def __eq__(self,other):
-            if not isinstance(other, impGraph.impEdge):
-                return False
-            return (self.clause == other.clause) and (self.source == other.source) and (self.target == other.target)
+            if not isinstance(other, impGraph.impEdge):                
+                return False            
+            return (self.clause == other.clause) and (self.clause_index == other.clause_index) and (self.source == other.source) and (self.target == other.target)
                 
         def __ne__(self,other):
             return not self == other
@@ -106,7 +106,7 @@ class impGraph:
         for n in graph.nodes:
             graph_copy = copy.deepcopy(graph)
             graph_copy.remove_node(n)
-            is_r, = impGraph.is_reachable(graph_copy, root, conflict)
+            is_r = impGraph.is_reachable(graph_copy, root, conflict)[0]
             if not is_r:
                 dist = impGraph.is_reachable(graph_copy, n, conflict)[1]
                 if dist < first_uip["dist_from_conflict"]:
@@ -154,6 +154,8 @@ class impGraph:
         source_node = self.get_node(source_lit)
         target_node = self.get_node(target_lit)
         self.add_edge_internal(source_node, clause, target_node)
+        self.lit_to_node[source_lit]
+        self.lit_to_node[target_lit]
         
     def add_edge_to_conflict(self, source_lit, clause):
         source_node = self.get_node(source_lit)
@@ -161,11 +163,11 @@ class impGraph:
         self.add_edge_internal(source_node, clause, target_node)
 
     def remove_node(self, node):
-        for e in node.outgoing:
+        for e in node.outgoing:                        
             e.target.ingoing.remove(e)
             self.edges.remove(e)
-        for e in node.ingoing:
-            e.target.outgoing.remove(e)            
+        for e in node.ingoing:           
+            e.source.outgoing.remove(e)         
             self.edges.remove(e)
         self.nodes.remove(node)
 
@@ -174,17 +176,29 @@ class impGraph:
             self.remove_node(conflict)
 
     def explain(self, init_clause, last_decision):
+        print("in explain")
         root = self.get_node(last_decision)
         first_uip = impGraph.find_first_uip(self, root)        
         clause = init_clause
+        print(clause)
+        print(self)
+        
         while -first_uip not in clause:
-            for lit in reversed(literal_assignments_ordered):
+            for lit in reversed(self.literal_assignments_ordered):
                 if -lit in clause:
                     last_assigned_lit = lit
                     break
-            if self.get_node(lit).ingoing:
-                other_clause = self.get_node(lit).ingoing[0]
-            clause = Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)          
+            print(last_assigned_lit)
+            print(self.get_node(last_assigned_lit).ingoing)
+            if self.get_node(last_assigned_lit).ingoing:
+                other_clause = self.get_node(last_assigned_lit).ingoing[0].clause
+                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
+                #TODO what about the else case?
+            else:
+                print("Fail")
+            print(clause)
+            exit()
+        print("out explain")
         return clause
       
     def __str__(self):

@@ -115,12 +115,12 @@ class Clause:
             self.num_literal -= 1
 
     def __eq__(self, other):
-        if not isinstance(other, Clause):
+        if not isinstance(other, Clause):                                    
             return False
-        return self.c == other
+        return self.c == other.c
 
     def __ne__(self, other):
-        return not self.c == other
+        return not self == other
 
     def __hash__(self):
         return hash(self.c)
