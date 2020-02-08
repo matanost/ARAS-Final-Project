@@ -2,6 +2,8 @@ class Operator(Enum):
     AND
     OR
     NOT
+    IF
+    IFF
 
 class Node:
 
@@ -40,7 +42,15 @@ class Node:
     def is_leaf(self):
         return not (self.has_right_son() and self.has_left_son())
 
-    
+    def get_parent(self):
+        return self.parent
+
+    def get_right_son(self):
+        return self.right_son
+
+    def get_left_son(self):
+        return self.left_son
+
 class Tree:
 
     def __init__(self):
