@@ -58,7 +58,7 @@ class impGraph:
         def __str__(self):
             return "<{},c{},{}>\n".format(str(self.source),str(self.clause_index+1),str(self.target))
             
-    @staticmethod
+    '''@staticmethod
     def is_acyclic(graph):
         if len(graph.nodes) == 0:
             return True
@@ -74,7 +74,7 @@ class impGraph:
             #visited.add(node)
             for edge in node.outgoing():
                 to_visit.append((edge.target, depth + 1))
-        return True
+        return True'''
 
     @staticmethod
     def is_reachable(graph, s, t):
@@ -103,7 +103,7 @@ class impGraph:
         conflict = graph.conflicts[0]
         root_dist = impGraph.is_reachable(graph, root, conflict)[1]
         first_uip = {"node":root, "dist_from_conflict" : root_dist}
-        for n in graph.nodes:
+        for n in graph.nodes.values():
             graph_copy = copy.deepcopy(graph)
             graph_copy.remove_node(n)
             is_r = impGraph.is_reachable(graph_copy, root, conflict)[0]
@@ -117,67 +117,59 @@ class impGraph:
     #######################################################################                    
 
     def __init__(self, formula):
-        self.nodes = list() 
+        self.nodes = dict() 
         self.edges = list()       
-        self.roots = list()
-        self.lit_to_node = dict()
+        #self.roots = list()
         self.conflicts = list()
         self.formula = formula
         self.literal_assignments_ordered = list()        
 
     def add_root(self, literal, level):
-        new_node = impGraph.impNode(self.impNodesTypes.Root, literal=literal, level=level)
-        self.nodes.append(new_node)
-        self.roots.append(new_node)
-        self.lit_to_node[literal] = new_node
+        self.nodes[literal] = impGraph.impNode(self.impNodesTypes.Root, literal=literal, level=level)
+        #self.roots.append(new_node)
 
     def add_literal(self, literal, level):
-        new_node = impGraph.impNode(self.impNodesTypes.Literal, literal=literal, level=level)
-        self.nodes.append(new_node)
-        self.lit_to_node[literal] = new_node
+        self.nodes[literal] = impGraph.impNode(self.impNodesTypes.Literal, literal=literal, level=level)
 
     def add_conflict(self):
-        new_node = impGraph.impNode(self.impNodesTypes.Conflict)
-        self.nodes.append(new_node)
-        self.conflicts.append(new_node)
-
-    def get_node(self, literal):
-        return self.lit_to_node[literal]
+        conflict_key = "Conflict" + str(len(self.conflicts))
+        self.nodes[conflict_key] = impGraph.impNode(self.impNodesTypes.Conflict)
+        self.conflicts.append(conflict_key)
 
     def add_edge_internal(self, source_node, clause, target_node):
         edge = impGraph.impEdge(clause, self.formula.index(clause), source_node, target_node)
         self.edges.append(edge)
         source_node.outgoing.append(edge)
         target_node.ingoing.append(edge)
+        return source_node, target_node
         
     def add_edge(self, source_lit, clause, target_lit):
-        source_node = self.get_node(source_lit)
-        target_node = self.get_node(target_lit)
-        self.add_edge_internal(source_node, clause, target_node)
-        self.lit_to_node[source_lit]
-        self.lit_to_node[target_lit]
+        self.nodes[source_lit], self.nodes[target_lit] = self.add_edge_internal(self.nodes[source_lit], clause, self.nodes[target_lit])
+        
         
     def add_edge_to_conflict(self, source_lit, clause):
-        source_node = self.get_node(source_lit)
-        target_node = self.conflicts[-1]
-        self.add_edge_internal(source_node, clause, target_node)
+        self.nodes[source_lit], self.nodes[self.conflicts[-1]] = self.add_edge_internal(self.nodes[source_lit], clause, self.nodes[self.conflicts[-1]])
 
-    def remove_node(self, node):
+    def remove_node(self, node): #TODO this is not set yet.
         for e in node.outgoing:                        
             e.target.ingoing.remove(e)
             self.edges.remove(e)
         for e in node.ingoing:           
             e.source.outgoing.remove(e)         
             self.edges.remove(e)
-        self.nodes.remove(node)
+        nodes_copy = copy.deepcopy(self.nodes)
+        for key, value in nodes_copy.items():
+            if value == node:
+                del self.nodes[key]
 
     def remove_conflicts(self):
         for conflict in self.conflicts:
-            self.remove_node(conflict)
+            self.remove_node(self.nodes[conflict])
+        self.conflicts = list()
 
     def explain(self, init_clause, last_decision):
         print("in explain")
-        root = self.get_node(last_decision)
+        root = self.nodes[last_decision]
         first_uip = impGraph.find_first_uip(self, root)        
         clause = init_clause
         print(clause)
@@ -189,9 +181,9 @@ class impGraph:
                     last_assigned_lit = lit
                     break
             print(last_assigned_lit)
-            print(self.get_node(last_assigned_lit).ingoing)
-            if self.get_node(last_assigned_lit).ingoing:
-                other_clause = self.get_node(last_assigned_lit).ingoing[0].clause
+            print(self.nodes[last_assigned_lit].ingoing)
+            if self.nodes[last_assigned_lit].ingoing:
+                other_clause = self.nodes[last_assigned_lit].ingoing[0].clause
                 clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
                 #TODO what about the else case?
             else:
@@ -208,10 +200,8 @@ class impGraph:
         for i,l in enumerate(self.literal_assignments_ordered):
             out += str(l) + ("," if i < (len(self.literal_assignments_ordered) - 1) else "")
         out += "]\n"
-        out += "Nodes:\n"
-        for n in self.nodes:
-            out += str(n) + "\n"
-        for l,n in self.lit_to_node.items():
+        out += "Nodes:\n"      
+        for l,n in self.nodes.items():
             out += "literal " + str(l) + " mapped to node " + str(n) + "\n"
         out += "Edges:\n"
         for e in self.edges:

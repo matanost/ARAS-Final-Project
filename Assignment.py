@@ -120,7 +120,7 @@ class Assignment:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
         self.variable_assignments.pop(var)
         self.imp_graph.literal_assignments_ordered.remove(self.get_literal(var))
-        self.imp_graph.remove_node(self.imp_graph.get_node(self.get_literal(var)))        
+        self.imp_graph.remove_node(self.imp_graph.nodes[self.get_literal(var)])        
         for clause in self.containing_clauses[var]:
             if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
                 self.clause_satisfied.remove(clause)
@@ -148,7 +148,7 @@ class Assignment:
         self.deduce(unassigned_literal, clause)        
 
     def conflict_found(self, conflicting_clause):
-        print("Found conflict in clause" + str(conflicting_clause)) #FIXME
+        print("Found conflict in clause" + str(conflicting_clause)) #TODO
         self.imp_graph.add_conflict()
         for lit in conflicting_clause:
             self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
