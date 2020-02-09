@@ -123,8 +123,8 @@ class Clause:
             self.num_literal -= 1
 
     def __eq__(self, other):
-        if not isinstance(other, Clause):                                    
-            return False
+        if not isinstance(other, Clause):                                   
+            return False        
         return self.c == other.c
 
     def __ne__(self, other):
@@ -148,6 +148,11 @@ class Clause:
     def create_clause(literal_set):
         clause = Clause()
         for l in literal_set:
-            clause.append(Literal(l))
+            if isinstance(l, Literal):
+                clause.append(l)
+            elif isinstance(l, int):
+                clause.append(Literal(l))
+            else:
+                raise Exception("Clause input contains an object which is not Literal or int.")
         return clause
             

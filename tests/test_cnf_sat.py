@@ -2,6 +2,7 @@
 #sudo apt install zlib1g-dev
 #pip install python-sat
 
+import time
 import sys
 sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
 sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
@@ -16,14 +17,21 @@ from random import randrange, sample
 from itertools import chain
 from pysat.solvers import Glucose3
 
-ITERATION_NUM = 1000
+toolbar_width = 10
 
+# setup toolbar
+sys.stdout.write("[%s]" % (" " * toolbar_width))
+sys.stdout.flush()
+sys.stdout.write("\b" * (toolbar_width+1)) # return to start of line, after '['
+
+ITERATION_NUM = (1000 // toolbar_width) * toolbar_width
 SCALE = 10
+
 def random_formula():
-    CLAUSE_NUM = randrange(1, SCALE + 1)    
     LITERAL_NUM = randrange(1, SCALE + 1)
+    CLAUSE_NUM = randrange(1, 5 * LITERAL_NUM + 1)    
     lit_with_negs = [l for l in range(1,LITERAL_NUM+1)] + [-l for l in range(1,LITERAL_NUM+1)]   
-    lit_in_clause = [randrange(1, 2 * LITERAL_NUM+1) for c in range(CLAUSE_NUM)]
+    lit_in_clause = [randrange(1, LITERAL_NUM + 1) for c in range(CLAUSE_NUM)]
     return [set(sample(lit_with_negs, lit_num)) for lit_num in lit_in_clause]
 
 fail = False
@@ -39,6 +47,7 @@ my_unsat_cnt = 0
 for ii in range(ITERATION_NUM):
     formula = random_formula()
     my_formula = CNF_formula.create_formula(formula)
+    print("Formula is " + str(my_formula))
     g = Glucose3()
     for c in formula:
         g.add_clause(list(c))
@@ -69,6 +78,11 @@ for ii in range(ITERATION_NUM):
             false_sat += 1
             fail_formula.append((True, my_formula))
     g.delete()
+
+    if(ii % (ITERATION_NUM / toolbar_width) == 0):
+        sys.stdout.write("-")
+        sys.stdout.flush()
+    
     #print("\n")
 print("\n")    
 print("FAIL" if fail else "PASS")
@@ -80,3 +94,5 @@ print("\tGlucose count : SAT=" + str(g_sat_cnt)  + ", UNSAT=" + str(g_unsat_cnt)
 if fail:
     for f in fail_formula:
         print("False " + ("SAT  " if f[0] else "UNSAT") + str(f[1]))
+    
+sys.stdout.write("]\n") # this ends the progress bar

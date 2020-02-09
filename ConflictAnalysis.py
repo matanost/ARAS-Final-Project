@@ -39,6 +39,12 @@ class impGraph:
             elif self.type == impGraph.impNodesTypes.Conflict:
                 return "Conflict"
 
+        def __hash__(self):
+            if self.type == impGraph.impNodesTypes.Literal or self.type == impGraph.impNodesTypes.Root:
+                return self.literal.__hash__()
+            else :
+                return str.__hash__("Conflict") + self.level.__hash__()
+
     class impEdge:
         
         def __init__(self, clause, clause_index ,source, target): #Clause index is passed for easier debug.
@@ -57,6 +63,9 @@ class impGraph:
             
         def __str__(self):
             return "<{},c{},{}>\n".format(str(self.source),str(self.clause_index+1),str(self.target))
+
+        def __hash__(self):            
+            return self.source.__hash__() + self.target.__hash__() + self.clause_index.__hash__() + self.clause.__hash__()
             
     '''@staticmethod
     def is_acyclic(graph):
@@ -124,6 +133,32 @@ class impGraph:
         self.formula = formula
         self.literal_assignments_ordered = list()        
 
+    def verify_edges(self):
+        edges = set()
+        for e in self.edges:
+            if (e not in e.source.outgoing) or (e not in e.target.ingoing):
+                raise Exception("Some node doesn't contain one of its edges")
+        for n in self.nodes.values():
+            for e in (n.ingoing + n.outgoing):
+                edges.add(e)
+        if edges != set(self.edges):
+            if len(edges) <= len(set(self.edges)):
+                raise Exception("Bad Checking at previous level")
+            #print("Node set")
+            #for e in edges:
+            #    print(str(e))
+            #print("Edge set")
+            #for e in self.edges:
+            #    print(str(e))
+            for e in edges:            
+                if e not in self.edges:
+                    print("This edges "+ str(e) +" is in the following nodes, and not in the edges data structure")
+                    for n in self.nodes.values():
+                        if e in n.ingoing or e in n.outgoing:
+                            print(str(n) + " times=" + str(len([e1 for e1 in n.ingoing if e == e1]) + len([e1 for e1 in n.outgoing if e == e1])))
+            raise Exception("More edges at nodes in/out then in edges")
+        
+        
     def add_root(self, literal, level):
         self.nodes[literal] = impGraph.impNode(self.impNodesTypes.Root, literal=literal, level=level)
         #self.roots.append(new_node)
@@ -139,21 +174,9 @@ class impGraph:
     def add_edge_internal(self, source_key, clause, target_key):
         edge = impGraph.impEdge(clause, self.formula.index(clause), self.nodes[source_key], self.nodes[target_key])
         self.edges.append(edge)        
-        #print("Trying to add " + str(edge))
-        #print("Check before ingoing assignment for n=" + str(target_key))        
-        #for e in self.nodes[target_key].ingoing:
-        #    print("in" + str(e))
-        #print("Check after outgoing assignment for n=" + str(source_key))                       
-        #for e in self.nodes[source_key].outgoing:
-        #    print("out " + str(e))        
         self.nodes[source_key].outgoing.append(edge)
         self.nodes[target_key].ingoing.append(edge)
-        #print("Check after ingoing assignment for n=" + str(target_key))
-        #for e in self.nodes[target_key].ingoing:
-        #    print("in " + str(e))
-        #print("Check after outgoing assignment for n=" + str(source_key))           
-        #for e in self.nodes[source_key].outgoing:
-        #    print("out " + str(e))
+        self.verify_edges()
         
     def add_edge(self, source_lit, clause, target_lit):
         self.add_edge_internal(source_lit, clause, target_lit)        
@@ -161,8 +184,14 @@ class impGraph:
     def add_edge_to_conflict(self, source_lit, clause):
         self.add_edge_internal(source_lit, clause, self.conflicts[-1])
 
-    def remove_node(self, node): #TODO this is not set yet.
-        for e in node.outgoing:                        
+    def remove_node(self, node):
+        print("Removing Node " + str(node))
+        self.verify_edges()
+        print("Passed first")
+        for e in node.outgoing:
+            print("Removing " + str(e))
+            for et in e.target.ingoing:
+                print("In Target " + str(et))
             e.target.ingoing.remove(e)
             self.edges.remove(e)
         for e in node.ingoing:           
@@ -172,6 +201,7 @@ class impGraph:
         for key, value in nodes_copy.items():
             if value == node:
                 del self.nodes[key]
+        self.verify_edges()
 
     def remove_conflicts(self):
         for conflict in self.conflicts:
@@ -197,11 +227,11 @@ class impGraph:
                     break
             #print(last_assigned_lit)
             #print(self.nodes[last_assigned_lit].ingoing)
-            if self.nodes[last_assigned_lit].ingoing:
+            if len(self.nodes[last_assigned_lit].ingoing) > 0:
                 other_clause = self.nodes[last_assigned_lit].ingoing[0].clause
                 clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)        
             else:
-                raise Exception("Node has no incoming edges.")
+                raise Exception("Node " + str(self.nodes[last_assigned_lit]) + " has no incoming edges. Graph is :" + str(self))
         return clause
       
     def __str__(self):

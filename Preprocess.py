@@ -1,16 +1,12 @@
 
 from itertools import combinations
 import copy
+from CNF_formula import CNF_formula
 
 #Remove redundant clauses, either bacuase they are duplication of clauses, or becuase they're tautologies.
 def remove_redundant_clauses(formula):
 
-    formula_copy = copy.deepcopy(formula)
-    for clause_comb in combinations(formula,2):
-        c1,c2 = clause_comb
-        if c1 == c2:
-            formula_copy.remove(c2)        
-    formula = formula_copy
+    formula = CNF_formula.create_formula(list(dict.fromkeys(formula)))
     formula_copy = copy.deepcopy(formula)
     for clause in formula:
         if len(clause) == 0:

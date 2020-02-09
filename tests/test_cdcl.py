@@ -10,14 +10,23 @@ from CNF_formula import CNF_formula, Clause, Literal
 from Assignment import Assignment
 
 formulas = list()
-formulas.append(CNF_formula.create_formula([{-1,3},{-3,-1,2},{-3,4},{-4,-2}]))
-formulas.append(CNF_formula.create_formula([{1},{1}]))
-formulas.append(CNF_formula.create_formula([{1},{-1}]))
-formulas.append(CNF_formula.create_formula([{-1,2},{-1,-2,3},{-1,-3,4}]))
+#formulas.append(CNF_formula.create_formula([{-1,3},{-3,-1,2},{-3,4},{-4,-2}]))
+#formulas.append(CNF_formula.create_formula([{1},{1}]))
+#formulas.append(CNF_formula.create_formula([{1},{-1}]))
+#formulas.append(CNF_formula.create_formula([{-1,2},{-1,-2,3},{-1,-3,4}]))
 #formulas.append()
-required_results = [True, True, False, True]
+#required_results = [True, True, False, True]
+
+#False SAT  (<{{-1}}><{{-1}}><{{1,-1}}><{{1}}><{{-1}}><{{1}}><{{1,-1}}><{{1,-1}}>) 
+#False SAT  (<{{-1}}><{{-1}}><{{1}}><{{1,-1}}><{{1}}><{{-1}}>)
+
+formulas.append(CNF_formula.create_formula([{1},{-1},{1,-1}]))
+formulas.append(CNF_formula.create_formula([{-1},{-1},{1},{1,-1},{1},{-1}]))
+
+required_results = [False, False]
 result_record = list()
 for i,f in enumerate(formulas):
+    print("Preprocessed version=" + str(remove_redundant_clauses(f)))
     print("result for formula :" + str(i) + " = " + str(f))
     result = Assignment.cnf_sat_solve(f)
     if result[0]:

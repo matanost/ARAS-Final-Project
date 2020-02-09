@@ -157,6 +157,7 @@ class Assignment:
         self.resolve_conflict()
         
     def backjump(self, level):
+        #raise Exception("In backjump")
         for lit in reversed(self.imp_graph.literal_assignments_ordered):
             if self.variable_assignments[lit.x]["level"] > level:
                 self.unassign_variable(lit.x)
@@ -169,7 +170,7 @@ class Assignment:
             return
         learnt_conflict = self.imp_graph.explain(self.conflict, self.last_decision)
         self.imp_graph.remove_conflicts()
-        levels = set([self.variable_assignments[lit.x]["level"] for literal in learnt_conflict])
+        levels = set([self.variable_assignments[literal.x]["level"] for literal in learnt_conflict])
         if len(levels) == 1:
             if levels.pop() == 0:
                 self.set_unsat()
