@@ -132,7 +132,8 @@ class Assignment:
         self.variable_assignments[var] = {"value" : value, "level" : self.level}
         self.imp_graph.literal_assignments_ordered.append(self.get_literal(var))
         for clause in self.containing_clauses[var]:
-            if self.get_literal(var) in clause:
+            if self.get_literal(var) in clause and clause not in self.clause_satisfied:
+                print("Set " + str(clause) + " as sat")
                 self.satisfy_clause(clause)
             self.update_clause_state(clause)
 
@@ -176,12 +177,21 @@ class Assignment:
         self.backjump(backjump_level)
     
     def decide(self, literal):
+        print("Deciding literal " + str(literal))
         self.level += 1
         self.imp_graph.add_root(literal, self.level)
         self.last_decision = literal
         self.assign_variable(literal.x, bool(literal.sgn))
 
+    def decide_unassigned_variables(self):
+        if len(self.clause_satisfied) != len(self.formula):
+            raise Exception("SAT when not all clauses are sat")
+        else:
+            for var in [v for v in self.variables if v not in self.variable_assignments]:
+                self.decide(Literal(var,Sign.POS))
+
     def deduce(self, literal, clause=None):
+        print("Deducing literal " + str(literal))
         self.imp_graph.add_literal(literal, self.level)
         if clause is not None:
             for lit in clause:
@@ -190,8 +200,8 @@ class Assignment:
         self.assign_variable(literal.x, bool(literal.sgn))
 
     def get_decision(self):
-        num_clauses = [tuple(l, len([c for c in self.containing_clauses_literals[l] if c not in self.clause_satisfied])) for l in self.literals]
-        max_index, (lit, num_c) = max(enumerate(num_clauses), key=lambda tup: tup[1][1])
+        num_clauses = [(l, len([c for c in self.containing_clauses_literals[l] if c not in self.clause_satisfied])) for l in self.literals]
+        max_index, (lit, num_c) = max(enumerate(num_clauses), key=lambda tup: tup[1][1])        
         return num_clauses[max_index][0]
         
         
@@ -216,7 +226,9 @@ class Assignment:
             for clause in self.clauses:
                 if l in clause:                
                     self.containing_clauses[l.x].append(clause)   
-                    self.containing_clauses_literals[l].append(clause) 
+                    self.containing_clauses_literals[l].append(clause)
+        for l in self.literals:
+            print("literal" + str(l) +" has " + str(len(self.containing_clauses_literals[l])) + " clauses")
         self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
         self.clause_satisfied = set() # clause in set iff all literals are assigned and is satisfied.
         self.watch_literals = dict() # Clause : literal list
@@ -245,14 +257,17 @@ class Assignment:
         return out
     
     @staticmethod
-    def sat_solve(formula):
-        a = Assignment(f)
+    def cnf_sat_solve(formula):
+        a = Assignment(formula)
         while not a.SAT and not a.UNSAT:
+            print("About to deduce========================================================================")
             while a.is_bcp_eligible():
                 a.bcp_iteration()
+            print("About to decide========================================================================")
             a.decide(a.get_decision())
+        a.decide_unassigned_variables()
         if a.SAT:
-            return True, [Literal(var,self.variable_assignments[var]["value"]) for var in self.variables]
+            return True, [Literal(var, a.variable_assignments[var]["value"]) for var in a.variables]
         #a.UNSAT:
         return False, None
         

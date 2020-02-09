@@ -35,7 +35,7 @@ class impGraph:
             if self.type == impGraph.impNodesTypes.Literal:
                 return str(self.literal) + ":" + str(self.level)
             elif self.type == impGraph.impNodesTypes.Root:
-                return "Root-" + str(self.literal) + ":" + str(self.level)
+                return "Root|" + str(self.literal) + ":" + str(self.level)
             elif self.type == impGraph.impNodesTypes.Conflict:
                 return "Conflict"
 
@@ -136,19 +136,30 @@ class impGraph:
         self.nodes[conflict_key] = impGraph.impNode(self.impNodesTypes.Conflict)
         self.conflicts.append(conflict_key)
 
-    def add_edge_internal(self, source_node, clause, target_node):
-        edge = impGraph.impEdge(clause, self.formula.index(clause), source_node, target_node)
-        self.edges.append(edge)
-        source_node.outgoing.append(edge)
-        target_node.ingoing.append(edge)
-        return source_node, target_node
+    def add_edge_internal(self, source_key, clause, target_key):
+        edge = impGraph.impEdge(clause, self.formula.index(clause), self.nodes[source_key], self.nodes[target_key])
+        self.edges.append(edge)        
+        #print("Trying to add " + str(edge))
+        #print("Check before ingoing assignment for n=" + str(target_key))        
+        #for e in self.nodes[target_key].ingoing:
+        #    print("in" + str(e))
+        #print("Check after outgoing assignment for n=" + str(source_key))                       
+        #for e in self.nodes[source_key].outgoing:
+        #    print("out " + str(e))        
+        self.nodes[source_key].outgoing.append(edge)
+        self.nodes[target_key].ingoing.append(edge)
+        #print("Check after ingoing assignment for n=" + str(target_key))
+        #for e in self.nodes[target_key].ingoing:
+        #    print("in " + str(e))
+        #print("Check after outgoing assignment for n=" + str(source_key))           
+        #for e in self.nodes[source_key].outgoing:
+        #    print("out " + str(e))
         
     def add_edge(self, source_lit, clause, target_lit):
-        self.nodes[source_lit], self.nodes[target_lit] = self.add_edge_internal(self.nodes[source_lit], clause, self.nodes[target_lit])
-        
+        self.add_edge_internal(source_lit, clause, target_lit)        
         
     def add_edge_to_conflict(self, source_lit, clause):
-        self.nodes[source_lit], self.nodes[self.conflicts[-1]] = self.add_edge_internal(self.nodes[source_lit], clause, self.nodes[self.conflicts[-1]])
+        self.add_edge_internal(source_lit, clause, self.conflicts[-1])
 
     def remove_node(self, node): #TODO this is not set yet.
         for e in node.outgoing:                        
@@ -174,6 +185,8 @@ class impGraph:
         clause = init_clause
         print(clause)
         print(self)
+
+        print("First UIP is " + str(first_uip))
         
         while -first_uip not in clause:
             for lit in reversed(self.literal_assignments_ordered):
@@ -187,6 +200,12 @@ class impGraph:
                 clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
                 #TODO what about the else case?
             else:
+                for n in self.nodes.values():
+                    print("n is "+str(n))
+                    for e in n.ingoing:
+                        print("ingoing: " + str(e))
+                    for e in n.outgoing:
+                        print("outgoing: " + str(e))
                 print("Fail")
             print(clause)
             exit()

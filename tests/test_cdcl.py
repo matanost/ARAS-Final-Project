@@ -31,6 +31,14 @@ f.append(c3)
 f.append(c4)
 print("Original formula={}\n".format(f))
 
+result = Assignment.cnf_sat_solve(f)
+if result[0]:
+    print("SAT")
+    for l in result[1]:
+        print(str(l))
+else:
+    print("UNSAT")
+'''
 a = Assignment(f)
 print("Initial Assignment:{}".format(a))
 
@@ -42,3 +50,4 @@ while a.is_bcp_eligible() and not a.conflict:
     print("Assignment after BCP iteration:{}".format(a))
     
 print("Final Assignment:{}\n".format(a))
+'''
