@@ -9,45 +9,27 @@ from Preprocess import remove_redundant_clauses
 from CNF_formula import CNF_formula, Clause, Literal
 from Assignment import Assignment
 
-f = CNF_formula()
-    
-c1 = Clause()
-c2 = Clause()
-c3 = Clause()
-c4 = Clause()
-    
-for i in {-1,3}:
-    c1.append(Literal(i))
-for i in {-3,-1,2}:
-    c2.append(Literal(i))
-for i in {-3,4}:
-    c3.append(Literal(i))
-for i in {-4,-2}:
-    c4.append(Literal(i))
-    
-f.append(c1)
-f.append(c2)
-f.append(c3)
-f.append(c4)
-print("Original formula={}\n".format(f))
+formulas = list()
+formulas.append(CNF_formula.create_formula([{-1,3},{-3,-1,2},{-3,4},{-4,-2}]))
+formulas.append(CNF_formula.create_formula([{1},{1}]))
+formulas.append(CNF_formula.create_formula([{1},{-1}]))
+formulas.append(CNF_formula.create_formula([{-1,2},{-1,-2,3},{-1,-3,4}]))
+#formulas.append()
+required_results = [True, True, False, True]
+result_record = list()
+for i,f in enumerate(formulas):
+    print("result for formula :" + str(i) + " = " + str(f))
+    result = Assignment.cnf_sat_solve(f)
+    if result[0]:
+        print("SAT")
+        print(str(Clause.create_clause(result[1])))
+    else:
+        print("UNSAT")
+    result_record.append(bool(result[0]))
+    print("Required result is :" + ("SAT" if required_results[i] else "UNSAT"))
+    print("\n\n")
 
-result = Assignment.cnf_sat_solve(f)
-if result[0]:
-    print("SAT")
-    for l in result[1]:
-        print(str(l))
+if any([required is not record for required in required_results for record in result_record]):
+    print ("FAIL")
 else:
-    print("UNSAT")
-'''
-a = Assignment(f)
-print("Initial Assignment:{}".format(a))
-
-a.decide(Literal(1))
-print("Assignment after decision:{}".format(a))
-
-while a.is_bcp_eligible() and not a.conflict:
-    a.bcp_iteration()
-    print("Assignment after BCP iteration:{}".format(a))
-    
-print("Final Assignment:{}\n".format(a))
-'''
+    print ("PASS")

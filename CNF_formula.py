@@ -46,6 +46,14 @@ class CNF_formula:
         
     def __len__(self):
         return len(self.f)
+
+    #Recieve a list of integer sets, and parse to CNF_formula
+    @staticmethod
+    def create_formula(clause_list):
+        formula = CNF_formula()
+        for c in clause_list:
+            formula.append(Clause.create_clause(set([l for l in c])))
+        return formula
     
 class Sign(enum.Enum):
     
@@ -134,4 +142,12 @@ class Clause:
     
     def __len__(self):
         return len(self.c)
+
+    #Recieve set of integers, and parse to Clause.
+    @staticmethod
+    def create_clause(literal_set):
+        clause = Clause()
+        for l in literal_set:
+            clause.append(Literal(l))
+        return clause
             

@@ -179,37 +179,29 @@ class impGraph:
         self.conflicts = list()
 
     def explain(self, init_clause, last_decision):
-        print("in explain")
+        #print("in explain")        
+        if not last_decision:
+            raise Exception("Explaining conflict on level 0")
         root = self.nodes[last_decision]
         first_uip = impGraph.find_first_uip(self, root)        
         clause = init_clause
-        print(clause)
-        print(self)
+        #print(clause)
+        #print(self)
 
-        print("First UIP is " + str(first_uip))
+        #print("First UIP is " + str(first_uip))
         
         while -first_uip not in clause:
             for lit in reversed(self.literal_assignments_ordered):
                 if -lit in clause:
                     last_assigned_lit = lit
                     break
-            print(last_assigned_lit)
-            print(self.nodes[last_assigned_lit].ingoing)
+            #print(last_assigned_lit)
+            #print(self.nodes[last_assigned_lit].ingoing)
             if self.nodes[last_assigned_lit].ingoing:
                 other_clause = self.nodes[last_assigned_lit].ingoing[0].clause
-                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
-                #TODO what about the else case?
+                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)        
             else:
-                for n in self.nodes.values():
-                    print("n is "+str(n))
-                    for e in n.ingoing:
-                        print("ingoing: " + str(e))
-                    for e in n.outgoing:
-                        print("outgoing: " + str(e))
-                print("Fail")
-            print(clause)
-            exit()
-        print("out explain")
+                raise Exception("Node has no incoming edges.")
         return clause
       
     def __str__(self):
