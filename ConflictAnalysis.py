@@ -122,7 +122,7 @@ class impGraph:
             if (n_key == root_key) or (n_key == conflict_key):
                 continue
             graph_copy = copy.deepcopy(graph)
-            graph_copy.remove_node(n_key)
+            graph_copy.del_node(n_key)
             is_r = impGraph.is_reachable(graph_copy, root_key, conflict_key)[0]
             if not is_r:
                 dist = impGraph.is_reachable(graph, n_key, conflict_key)[1]
@@ -139,7 +139,7 @@ class impGraph:
         #self.roots = list()
         self.conflicts = list()
         self.formula = formula
-        self.literal_assignments_ordered = list()        
+        self.lit_assign_ord = list()        
 
     def verify_edges(self):
         edges = set()
@@ -192,7 +192,7 @@ class impGraph:
             raise Exception("Source not in nodes " + str(source_lit))
         self.add_edge_internal(source_lit, clause, self.conflicts[-1])
 
-    def remove_node(self, node_key):
+    def del_node(self, node_key):
         node = self.nodes[node_key]
         #print("Removing Node " + str(node))
         
@@ -215,9 +215,9 @@ class impGraph:
                 del self.nodes[key]
         self.verify_edges()
 
-    def remove_conflicts(self):
+    def del_conflicts(self):
         for conflict in self.conflicts:
-            self.remove_node(conflict)
+            self.del_node(conflict)
         self.conflicts = list()
 
     def explain(self, init_clause, last_decision):
@@ -234,7 +234,7 @@ class impGraph:
         if not first_uip_literal:
             raise Exception("None literal first UIP: " + str(first_uip_key))
         while -first_uip_literal not in clause:
-            for lit in reversed(self.literal_assignments_ordered):
+            for lit in reversed(self.lit_assign_ord):
                 if -lit in clause:
                     last_assigned_literal = lit
                     break
@@ -251,8 +251,8 @@ class impGraph:
         out = "Implication Graph:\n*******\n"
         out += "Original formula={}\n".format(self.formula)
         out += "Assignments by order: \n["
-        for i,l in enumerate(self.literal_assignments_ordered):
-            out += str(l) + ("," if i < (len(self.literal_assignments_ordered) - 1) else "")
+        for i,l in enumerate(self.lit_assign_ord):
+            out += str(l) + ("," if i < (len(self.lit_assign_ord) - 1) else "")
         out += "]\n"
         out += "Nodes:\n"      
         for l,n in self.nodes.items():        
