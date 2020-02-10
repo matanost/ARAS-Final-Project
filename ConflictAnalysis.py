@@ -68,24 +68,6 @@ class impGraph:
 
         def __hash__(self):            
             return self.source.__hash__() + self.target.__hash__() + self.clause_index.__hash__() + self.clause.__hash__()
-            
-    '''@staticmethod
-    def is_acyclic(graph):
-        if len(graph.nodes) == 0:
-            return True
-        stopping_depth = len(graph.nodes) + 1
-        #visited = set()
-        to_visit = [(r,0) for r in graph.roots]
-        while to_visit:
-            node, depth = to_visit.pop(0)
-            if len(node.outgoing()) == 0:
-                continue
-            if depth == stopping_depth:
-                return False
-            #visited.add(node)
-            for edge in node.outgoing():
-                to_visit.append((edge.target, depth + 1))
-        return True'''
 
     @staticmethod
     def is_reachable(graph, s, t):
@@ -128,6 +110,7 @@ class impGraph:
                 dist = impGraph.is_reachable(graph, n_key, conflict_key)[1]
                 if dist < first_uip["dist_from_conflict"]:
                     first_uip = {"node": n_key, "dist_from_conflict" : dist}
+        print("first UIP is=" + str(first_uip["node"]))
         return first_uip["node"]
 
     #######################################################################
@@ -152,12 +135,12 @@ class impGraph:
         if edges != self.edges.keys():
             if len(edges) <= len(self.edges):
                 raise Exception("Bad Checking at previous level")
-            for e in edges:
+            '''for e in edges:
                 if e not in self.edges.keys():
                     print("This edges "+ e +" is in the following nodes, and not in the edges data structure")
                     for n in self.nodes.values():
                         if e in n.ingoing_key or e in n.outgoing_key:
-                            print(str(n) + " times=" + str(len([e1 for e1 in n.ingoing_key if e == e1]) + len([e1 for e1 in n.outgoing_key if e == e1])))
+                            print(str(n) + " times=" + str(len([e1 for e1 in n.ingoing_key if e == e1]) + len([e1 for e1 in n.outgoing_key if e == e1])))'''
             raise Exception("More edges at nodes in/out then in edges")
         
         
@@ -221,28 +204,29 @@ class impGraph:
         self.conflicts = list()
 
     def explain(self, init_clause, last_decision):
-        #print("in explain")        
         if not last_decision:
             raise Exception("Explaining conflict on level 0")
         first_uip_key = impGraph.find_first_uip(self, root_key=last_decision)        
         clause = init_clause
-        print("Explaind clause:")
-        #print(self)
-
-        #print("First UIP is " + str(first_uip))
         first_uip_literal = self.nodes[first_uip_key].literal
         if not first_uip_literal:
             raise Exception("None literal first UIP: " + str(first_uip_key))
-        while -first_uip_literal not in clause:
+        it = 0
+        levels = lambda clause: [(self.nodes[l].level if l in self.nodes else self.nodes[-l].level) for l in clause]
+        num_appear = lambda lvl, a : sum([(1 if lvl==elm else 0) for elm in a])
+        first_uip_lvl = self.nodes[first_uip_key].level
+        print("UIP level appears:" + str(num_appear(first_uip_lvl, levels(clause))))
+        
+        while not ((-first_uip_literal in clause) and (num_appear(first_uip_lvl, levels(clause)) == 1)):
+            print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
             for lit in reversed(self.lit_assign_ord):
                 if -lit in clause:
                     last_assigned_literal = lit
                     break
-            #print(last_assigned_lit)
-            #print(self.nodes[last_assigned_lit].ingoing)
             if len(self.nodes[last_assigned_literal].ingoing_key) > 0:
                 other_clause = self.edges[self.nodes[last_assigned_literal].ingoing_key[0]].clause
-                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)        
+                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
+                it += 1
             else:
                 raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges. Graph is :" + str(self))
         return clause

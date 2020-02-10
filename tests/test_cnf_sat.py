@@ -44,10 +44,11 @@ g_sat_cnt = 0
 g_unsat_cnt = 0
 my_sat_cnt = 0
 my_unsat_cnt = 0
+out = ""
 for ii in range(ITERATION_NUM):
     formula = random_formula()
     my_formula = CNF_formula.create_formula(formula)
-    print("Formula is " + str(my_formula))
+    #print("Formula is " + str(my_formula))
     g = Glucose3()
     for c in formula:
         g.add_clause(list(c))
@@ -71,16 +72,16 @@ for ii in range(ITERATION_NUM):
     if g_sat != my_sat:
         fail = True
         fail_num += 1        
-        print("Failing formula: " + str(my_formula))
-        print("Index is : " + str(ii))
+        out += ("Failing formula: " + str(my_formula) + "\n")
+        out += ("Index is : " + str(ii)+ "\n")
         if g_sat: 
-            print("Glucose thinks SAT : ")
-            print(g_model)
+            out += ("Glucose thinks SAT : "+ "\n")
+            out += (g_model+ "\n")
             false_unsat += 1
             fail_formula.append((False, my_formula))
         else:
-            print("My sat_solver thinks SAT : ")
-            print(str(Clause.create_clause(my_model)))
+            out += ("My sat_solver thinks SAT : "+ "\n")
+            out += (str(Clause.create_clause(my_model))+ "\n")
             false_sat += 1
             fail_formula.append((True, my_formula))
     g.delete()
@@ -90,15 +91,17 @@ for ii in range(ITERATION_NUM):
         sys.stdout.flush()
     
     #print("\n")
-print("\n")    
-print("FAIL" if fail else "PASS")
-print("Failure: " + str(fail_num) + " Passing: " + str(ITERATION_NUM - fail_num))
-print("False SAT: " + str(false_sat) + " False UNSAT: " + str(false_unsat))
-print("Coverage:")
-print("\tMY count      : SAT=" + str(my_sat_cnt) + ", UNSAT=" + str(my_unsat_cnt))
-print("\tGlucose count : SAT=" + str(g_sat_cnt)  + ", UNSAT=" + str(g_unsat_cnt))
+out += ("\n")    
+out += ("FAIL" if fail else "PASS"+ "\n")
+out += ("Failure: " + str(fail_num) + " Passing: " + str(ITERATION_NUM - fail_num)+ "\n")
+out += ("False SAT: " + str(false_sat) + " False UNSAT: " + str(false_unsat)+ "\n")
+out += ("Coverage:\n")
+out += ("\tMY count      : SAT=" + str(my_sat_cnt) + ", UNSAT=" + str(my_unsat_cnt)+ "\n")
+out += ("\tGlucose count : SAT=" + str(g_sat_cnt)  + ", UNSAT=" + str(g_unsat_cnt)+ "\n")
 if fail:
     for f in fail_formula:
-        print("False " + ("SAT  " if f[0] else "UNSAT") + str(f[1]))
+        out += ("False " + ("SAT  " if f[0] else "UNSAT") + str(f[1])+ "\n")
     
 sys.stdout.write("]\n") # this ends the progress bar
+
+print(out)
