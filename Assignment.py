@@ -41,7 +41,6 @@ class Assignment:
 
     @staticmethod
     def resolve_clauses(c1, c2, lit):
-        resolving_lit = None
         if (lit in c1) and (-lit in c2):
             pos = c1
             neg = c2
@@ -52,9 +51,9 @@ class Assignment:
             raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))
         pos.remove(lit)
         neg.remove(-lit)
-        for l in c2:
-            c1.add(l)
-        return c1
+        for l in neg:
+            pos.add(l)
+        return pos
 
     def get_literal(self, var):
         if var not in self.variable_assignments:
@@ -69,6 +68,7 @@ class Assignment:
         return [l for l in clause if l.x not in self.variable_assignments]
         
     def satisfy_clause(self, clause):
+        print("satisfying clause " + str(clause) + " #" + str(self.formula.index(clause)))
         self.clause_satisfied.add(clause)
         self.watch_literals.pop(clause)
         if clause in self.bcp_eligible:
@@ -79,7 +79,7 @@ class Assignment:
     def is_clause_satisfied(self, clause):
         for l in clause:
             if l.x in self.variable_assignments:
-                if self.variable_assignments[l.x]["value"] == l.sgn:
+                if self.variable_assignments[l.x]["value"] == bool(l.sgn):
                     return True
         return False
         
@@ -117,23 +117,37 @@ class Assignment:
         return self.imp_graph.literal_assignments_ordered.index(literal)
         
     def unassign_variable(self, var):
+        print("Trying to unassign " + str(var))
         if var not in self.variable_assignments:
             raise Exception("Attempt to unassign unassigned variable {}".format(var))
+        var_as_lit = self.get_literal(var)
         self.variable_assignments.pop(var)
-        self.imp_graph.literal_assignments_ordered.remove(self.get_literal(var))
-        self.imp_graph.remove_node(self.imp_graph.nodes[self.get_literal(var)])        
+        self.imp_graph.literal_assignments_ordered.remove(var_as_lit)
+        self.imp_graph.remove_node(var_as_lit)
+        if self.last_decision is not None:
+            if self.last_decision.x == var:
+                self.last_decision = None
         for clause in self.containing_clauses[var]:
-            if not self.is_clause_satisfied(clause) and clause in self.clause_satisfied:
+            if var_as_lit not in clause:
+                continue
+            if clause in self.clause_satisfied and not self.is_clause_satisfied(clause):                
+                print("un-satisfying clause " + str(clause) + " #" + str(self.formula.index(clause)))
                 self.clause_satisfied.remove(clause)
-            self.update_clause_state(clause)
+                #self.bcp_eligible.add(clause)
+            elif clause in self.bcp_eligible:
+                self.bcp_eligible.remove(clause)
+            self.update_clause_state(clause) #TODO maybe this should check more extensivley?
+        #TODO handle BCP eligibility.
         
     def assign_variable(self, var, value):
+        print("Trying to assign " + str(var) + " as " + str(value)) 
         if var in self.variable_assignments:
             raise Exception("Attempt to assign assigned variable {}:{},{}".format(var,self.variable_assignments[var]["value"],self.variable_assignments[var]["level"]))
         self.variable_assignments[var] = {"value" : value, "level" : self.level}
-        self.imp_graph.literal_assignments_ordered.append(self.get_literal(var))
+        literal = Literal(var,Sign.POS if value else Sign.NEG)
+        self.imp_graph.literal_assignments_ordered.append(literal)
         for clause in self.containing_clauses[var]:
-            if self.get_literal(var) in clause and clause not in self.clause_satisfied:
+            if literal in clause and clause not in self.clause_satisfied:
                 #print("Set " + str(clause) + " as sat")
                 self.satisfy_clause(clause)
             self.update_clause_state(clause)
@@ -150,6 +164,7 @@ class Assignment:
         self.deduce(unassigned_literal, clause)        
 
     def conflict_found(self, conflicting_clause):
+        print("Found conflict at " + str(conflicting_clause))
         self.imp_graph.add_conflict()
         for lit in conflicting_clause:
             self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
@@ -181,6 +196,8 @@ class Assignment:
             levels.remove(max(levels))
             backjump_level = max(levels)
         self.backjump(backjump_level)
+        print("Adding clause=" + str(learnt_conflict))
+        self.formula.append(learnt_conflict)
         #print("Conflict resolved")
     
     def decide(self, literal):
@@ -205,6 +222,8 @@ class Assignment:
         if clause is not None:
             for lit in clause:
                 if lit != literal and lit.x in self.variable_assignments:
+                    if -lit not in  self.imp_graph.nodes.keys():
+                        raise Exception("Deducing when not all other literals are assigned lit=" + str(literal)+ " clause=" + ("None" if clause is None else str(clause) + ",#" + str(self.formula.index(clause))))
                     self.imp_graph.add_edge(-lit, clause, literal)
         self.assign_variable(literal.x, bool(literal.sgn))
 
@@ -226,8 +245,9 @@ class Assignment:
         
     def set_unsat(self):
         self.UNSAT = True
-
+    
     def __init__(self, formula):
+        Assignment.reflection = self
         self.level = 0
         self.formula = formula
         self.variables = Assignment.get_variables(formula)
@@ -260,11 +280,11 @@ class Assignment:
                 out += "<{}{}:{}>".format(("" if self.variable_assignments[var]["value"] else "-"), var, self.variable_assignments[var]["level"])
         out += "\n"
         out +=  "Status:" + ("Conflict" if self.conflict else "No Conflict") + "\n"
-        out += "Satisfied Clauses: {}\n".format([self.clauses.index(c)+1 for c in self.clause_satisfied])
-        out += "BCP eligible clauses: {}\n".format([self.clauses.index(c)+1 for c in self.bcp_eligible])
+        out += "Satisfied Clauses: {}\n".format([self.clauses.index(c) for c in self.clause_satisfied])
+        out += "BCP eligible clauses: {}\n".format([self.clauses.index(c) for c in self.bcp_eligible])
         out += "Watch Literals:"
         for clause, literals in self.watch_literals.items():
-            out += "<c={}, {}>".format(self.clauses.index(clause)+1, [str(l) for l in literals])
+            out += "<c={}, {}>".format(self.clauses.index(clause), [str(l) for l in literals])
         out += "\n"
         out += str(self.imp_graph)
         return out

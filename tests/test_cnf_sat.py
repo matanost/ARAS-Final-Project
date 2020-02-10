@@ -53,7 +53,13 @@ for ii in range(ITERATION_NUM):
         g.add_clause(list(c))
 
     #print("Solving formula:" + str(my_formula))
-    my_result = Assignment.cnf_sat_solve(my_formula)
+    try:
+        my_result = Assignment.cnf_sat_solve(my_formula)
+    except Exception as e:
+        print("Exception=" + str(e))
+        print("Assignment:" + str(Assignment.reflection))
+        raise e
+        exit(1)
     my_sat = my_result[0]
     my_model = my_result[1]
     g_sat = g.solve()

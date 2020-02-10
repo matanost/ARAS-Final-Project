@@ -82,8 +82,8 @@ class Literal:
             self.sgn = sign
 
     def __eq__(self, other):
-        #if not isinstance(other, Literal):
-        #    return False
+        if not isinstance(other, Literal):
+            return False
         return (self.x == other.x) and (self.sgn == other.sgn)
 
     def __ne__(self, other):
@@ -119,7 +119,8 @@ class Clause:
 
     def remove(self, l):
         if l in self.c:
-            self.f.remove(l)
+            temp_list = list(self.c).remove(l) #TODO
+            self.c = frozenset(temp_list)
             self.num_literal -= 1
 
     def __eq__(self, other):
