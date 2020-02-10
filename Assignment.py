@@ -1,7 +1,8 @@
 
-from CNF_formula import Literal, Sign
+from CNF_formula import Literal, Sign, Clause
 from ConflictAnalysis import impGraph
 from Preprocess import remove_redundant_clauses
+import copy
     
 class Assignment:
 
@@ -48,12 +49,15 @@ class Assignment:
             pos = c2
             neg = c1
         else:
-            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))
-        pos.remove(lit)
-        neg.remove(-lit)
+            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))        
+        new_clause = Clause()
+        for l in pos:
+            if l != lit:
+                new_clause.append(l)
         for l in neg:
-            pos.add(l)
-        return pos
+            if l != -lit:
+                new_clause.append(l)
+        return new_clause
 
     def get_literal(self, var):
         if var not in self.variable_assignments:
@@ -88,6 +92,7 @@ class Assignment:
         return unassigned if len(unassigned) < 2 else unassigned[:2]  
     
     def update_clause_state(self, clause):
+        print("Updating " + str(clause))
         if clause in self.clause_satisfied:
             return
         if clause not in self.watch_literals:
@@ -146,7 +151,8 @@ class Assignment:
         self.variable_assignments[var] = {"value" : value, "level" : self.level}
         literal = Literal(var,Sign.POS if value else Sign.NEG)
         self.imp_graph.literal_assignments_ordered.append(literal)
-        for clause in self.containing_clauses[var]:
+        containing_clauses = copy.deepcopy(self.containing_clauses[var])
+        for clause in containing_clauses:
             if literal in clause and clause not in self.clause_satisfied:
                 #print("Set " + str(clause) + " as sat")
                 self.satisfy_clause(clause)
@@ -164,28 +170,33 @@ class Assignment:
         self.deduce(unassigned_literal, clause)        
 
     def conflict_found(self, conflicting_clause):
-        print("Found conflict at " + str(conflicting_clause))
+        print("Found conflict at " + str(conflicting_clause) + " #" + str(self.formula.index(conflicting_clause)))
         self.imp_graph.add_conflict()
         for lit in conflicting_clause:
             self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
         self.conflict = conflicting_clause
         self.resolve_conflict()
+        self.conflict = None
         
     def backjump(self, level):
         #raise Exception("In backjump")
         for lit in reversed(self.imp_graph.literal_assignments_ordered):
             if self.variable_assignments[lit.x]["level"] > level:
                 self.unassign_variable(lit.x)
+        self.level = level
         
     def resolve_conflict(self):
-        #print("Conflict")
+        print("Conflict********************************************")
         #print(str(self.imp_graph))
         if self.level == 0:
             self.set_unsat()
             return
+        print("Init learnt conflict: " + str(self.conflict))
         learnt_conflict = self.imp_graph.explain(self.conflict, self.last_decision)
+        print("Learnt conflict: " + str(learnt_conflict))
+        learnt_clause = -learnt_conflict
         self.imp_graph.remove_conflicts()
-        levels = set([self.variable_assignments[literal.x]["level"] for literal in learnt_conflict])
+        levels = set([self.variable_assignments[literal.x]["level"] for literal in learnt_clause])
         if len(levels) == 1:
             if levels.pop() == 0:
                 self.set_unsat()
@@ -196,9 +207,19 @@ class Assignment:
             levels.remove(max(levels))
             backjump_level = max(levels)
         self.backjump(backjump_level)
-        print("Adding clause=" + str(learnt_conflict))
-        self.formula.append(learnt_conflict)
-        #print("Conflict resolved")
+        print("Adding clause=" + str(learnt_clause))
+        for l in learnt_clause:
+            if l not in self.literals:
+                self.literals.add(l)
+                self.containing_clauses_literals[l] = [learnt_clause]
+            else:
+                self.containing_clauses_literals[l].append(learnt_clause)
+            self.containing_clauses[l.x].add(learnt_clause)
+        self.clauses.append(learnt_clause)
+        self.formula.append(learnt_clause)
+        self.imp_graph.formula = self.formula
+        self.update_clause_state(learnt_clause)
+        print("Conflict resolved********************************************")
     
     def decide(self, literal):
         if literal is None:
@@ -228,10 +249,17 @@ class Assignment:
         self.assign_variable(literal.x, bool(literal.sgn))
 
     def get_decision(self):
+        print("Entered get_decision")
         num_clauses = [(l, len([c for c in self.containing_clauses_literals[l] if c not in self.clause_satisfied])) for l in self.literals if l.x not in self.variable_assignments]
         if (not num_clauses) or self.SAT or self.UNSAT:
+            if len(self.variable_assignments) == len(self.variables) and not self.SAT and not self.UNSAT:
+                print("Incorrect variable assignment num")
+                print(self)
+                exit()
+            print("Leaving get_decision with: num_clauses=" + ("None" if not num_clauses else str(len(num_clauses))) + "  " + ("SAT" if self.SAT else ("UNSAT" if self.UNSAT else "N/A")))
             return None
-        max_index, (lit, num_c) = max(enumerate(num_clauses), key=lambda tup: tup[1][1])        
+        max_index, (lit, num_c) = max(enumerate(num_clauses), key=lambda tup: tup[1][1])
+        print("Leaving get_decision")
         return num_clauses[max_index][0]
         
         
@@ -253,13 +281,15 @@ class Assignment:
         self.variables = Assignment.get_variables(formula)
         self.literals = Assignment.get_literals(formula)
         self.clauses = [clause for clause in self.formula]                
-        self.containing_clauses = {v : [] for v in self.variables}  
+        self.containing_clauses = {v : set() for v in self.variables}  
         self.containing_clauses_literals = {l : [] for l in self.literals}        
         for l in self.literals:
             for clause in self.clauses:
                 if l in clause:                
-                    self.containing_clauses[l.x].append(clause)   
+                    self.containing_clauses[l.x].add(clause)
                     self.containing_clauses_literals[l].append(clause)
+                if -l in clause:
+                    self.containing_clauses[l.x].add(clause)
         #for l in self.literals:
         #    print("literal" + str(l) +" has " + str(len(self.containing_clauses_literals[l])) + " clauses")
         self.variable_assignments = dict() # Var : {value : True/False , level: unsigned int}
@@ -281,6 +311,7 @@ class Assignment:
         out += "\n"
         out +=  "Status:" + ("Conflict" if self.conflict else "No Conflict") + "\n"
         out += "Satisfied Clauses: {}\n".format([self.clauses.index(c) for c in self.clause_satisfied])
+        out += "Un-Satisfied Clauses: {}\n".format([self.clauses.index(c) for c in self.formula if c not in self.clause_satisfied])
         out += "BCP eligible clauses: {}\n".format([self.clauses.index(c) for c in self.bcp_eligible])
         out += "Watch Literals:"
         for clause, literals in self.watch_literals.items():

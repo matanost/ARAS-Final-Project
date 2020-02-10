@@ -24,7 +24,7 @@ sys.stdout.write("[%s]" % (" " * toolbar_width))
 sys.stdout.flush()
 sys.stdout.write("\b" * (toolbar_width+1)) # return to start of line, after '['
 
-ITERATION_NUM = (1000 // toolbar_width) * toolbar_width
+ITERATION_NUM = (10000 // toolbar_width) * toolbar_width
 SCALE = 10
 
 def random_formula():

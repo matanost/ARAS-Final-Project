@@ -39,8 +39,8 @@ class CNF_formula:
 
     def __str__(self):
         out = "("
-        for c in self.f:
-            out = out + "<" + str(c) + ">"
+        for i,c in enumerate(self.f):
+            out = out + "<" "c" + str(i) +  "=" + str(c) + ">"
         out = out + ")"
         return out
         
@@ -117,11 +117,12 @@ class Clause:
     def __next__(self):
         return self.c.__next__()
 
-    def remove(self, l):
-        if l in self.c:
-            temp_list = list(self.c).remove(l) #TODO
-            self.c = frozenset(temp_list)
-            self.num_literal -= 1
+
+    #def remove(self, l):
+    #    if l in self.c:
+    #        temp_list = list(self.c).remove(l) #TODO
+    #        self.c = frozenset(temp_list)
+    #        self.num_literal -= 1
 
     def __eq__(self, other):
         if not isinstance(other, Clause):                                   
@@ -143,6 +144,12 @@ class Clause:
     
     def __len__(self):
         return len(self.c)
+
+    def __neg__(self):
+        neg_c = Clause()
+        for l in self.c:
+            neg_c.append(-l)
+        return neg_c
 
     #Recieve set of integers, and parse to Clause.
     @staticmethod

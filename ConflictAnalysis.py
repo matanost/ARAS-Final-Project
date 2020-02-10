@@ -226,7 +226,7 @@ class impGraph:
             raise Exception("Explaining conflict on level 0")
         first_uip_key = impGraph.find_first_uip(self, root_key=last_decision)        
         clause = init_clause
-        #print(clause)
+        print("Explaind clause:")
         #print(self)
 
         #print("First UIP is " + str(first_uip))
