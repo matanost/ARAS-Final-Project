@@ -8,20 +8,20 @@ class CongClosure:
             self.rank = 0
             self.key = key
 
-    def __init__:
+        def __str__(self):
+            return "(k=" + str(self.key) + ",r=" + str(self.rank) + ")=>p=" + str(self.parent) + "\t"
+
+    def __init__(self):
         self.nodes = dict()
 
     def make_sets(self, keys):
         for key in keys:
             self.nodes[key] = CongClosure.Node(key)
 
-    def get_parent(self, x): #This is for debug
-        return self.nodes[x].parent
-
     def find(self, x):
         if self.nodes[x].parent != x:
-            x.parent = self.find(self.nodes[x].parent)
-            return self.nodes[x].parent
+            self.nodes[x].parent = self.find(self.nodes[x].parent)
+        return self.nodes[x].parent
 
     def union(self, x, y):
         x_root = self.find(x)
@@ -38,3 +38,14 @@ class CongClosure:
 
     def equal(self, x, y):
         return self.find(x) == self.find(y)
+
+    def __str__(self):
+        out =  ("------------------------------\n")
+        out += ("Congruance Closure=\n")
+        for i,n in enumerate(self.nodes.values()):
+            out += str(n)
+            WIDTH = 10
+            if (i % WIDTH) == WIDTH-1:
+                out += "\n"
+        out += ("------------------------------\n")
+        return out
