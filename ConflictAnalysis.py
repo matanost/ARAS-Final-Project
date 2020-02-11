@@ -216,9 +216,9 @@ class impGraph:
         num_appear = lambda lvl, a : sum([(1 if lvl==elm else 0) for elm in a])
         first_uip_lvl = self.nodes[first_uip_key].level
         print("UIP level appears:" + str(num_appear(first_uip_lvl, levels(clause))))
-        
-        while not ((-first_uip_literal in clause) and (num_appear(first_uip_lvl, levels(clause)) == 1)):
-            print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
+
+        print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
+        while not ((-first_uip_literal in clause) and ((num_appear(first_uip_lvl, levels(clause)) == 1))): #or (len(set(levels(clause))) == 1))):
             for lit in reversed(self.lit_assign_ord):
                 if -lit in clause:
                     last_assigned_literal = lit
@@ -228,7 +228,8 @@ class impGraph:
                 clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
                 it += 1
             else:
-                raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges. Graph is :" + str(self))
+                raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges.")# Graph is:\n" + str(self))
+            print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
         return clause
       
     def __str__(self):
@@ -240,7 +241,7 @@ class impGraph:
         out += "]\n"
         out += "Nodes:\n"      
         for l,n in self.nodes.items():        
-            out += "Object=" + repr(l) + ", literal " + str(l) + " mapped to node " + str(n) + "\n"
+            out += "Literal " + str(l) + " mapped to node " + str(n) + " at level " + str(n.level) + "\n"
         out += "Edges:\n"
         for e in self.edges.values():
             out += str(e)

@@ -46,6 +46,9 @@ my_sat_cnt = 0
 my_unsat_cnt = 0
 out = ""
 for ii in range(ITERATION_NUM):
+
+    for i in range(4):
+        print("******************************************************************************************************")
     formula = random_formula()
     my_formula = CNF_formula.create_formula(formula)
     #print("Formula is " + str(my_formula))
@@ -76,7 +79,7 @@ for ii in range(ITERATION_NUM):
         out += ("Index is : " + str(ii)+ "\n")
         if g_sat: 
             out += ("Glucose thinks SAT : "+ "\n")
-            out += (g_model+ "\n")
+            out += (str(g_model) + "\n")
             false_unsat += 1
             fail_formula.append((False, my_formula))
         else:

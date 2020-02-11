@@ -55,16 +55,18 @@ class Assignment:
         return unassigned if len(unassigned) < 2 else unassigned[:2]  
     
     def update_clause_state(self, c):
-        #print("Updating " + str(c))       
+        print("Updating " + str(c))       
         if self.is_c_sat(c):
-            #print("Satisying here")
+            print("Satisying here")
             self.satisfy_clause(c)
         if c in self.clause_sat:
+            print("Here")
             return
         if c not in self.watch_lits:
             self.watch_lits[c] = []
         if all([(l.x not in self.var_assign) for l in self.watch_lits[c]]) and self.watch_lits[c] and (len(self.watch_lits[c]) == 2):
             return
+        print("Looking for new watch literals")
         watch_lits = self.find_watch_lits(c)       
         if len(watch_lits) == 0:
             for l in self.watch_lits[c]:
@@ -72,11 +74,13 @@ class Assignment:
                     self.satisfy_clause(c)
                     return
             self.conflict_found(c)
+            return True
         elif len(watch_lits) == 1:
             self.bcp_vld.add(c)
             self.watch_lits[c] = watch_lits
         else : 
-            self.watch_lits[c] = watch_lits        
+            self.watch_lits[c] = watch_lits
+        return False
 
     def unassign_variable(self, var):
         #print("Trying to unassign " + str(var))
@@ -99,7 +103,7 @@ class Assignment:
             self.update_clause_state(c)
         
     def assign_variable(self, var, val):
-        #print("Trying to assign " + str(var) + " as " + str(val)) 
+        print("Trying to assign " + str(var) + " as " + str(val)) 
         if var in self.var_assign:
             raise Exception("Attempt to assign assigned variable {}:{},{}".format(var,self.var_assign[var]["val"],self.var_assign[var]["lvl"]))
         self.var_assign[var] = {"val" : val, "lvl" : self.lvl}
@@ -108,18 +112,22 @@ class Assignment:
         containing_clauses = copy.deepcopy(self.cont_clauses[var])
         for c in containing_clauses:
             if l in c and c not in self.clause_sat:
-                #print("Set " + str(clause) + " as sat")
-                self.satisfy_clause(c)
-            self.update_clause_state(c)
+                print("Set " + str(c) + " as sat, lit=" + str(l))
+                self.satisfy_clause(c)            
+            conflict = self.update_clause_state(c)
+            if conflict:
+                return
 
-    def conflict_found(self, conflicting_clause):
-        #print("Found conflict at " + str(conflicting_clause) + " #" + str(self.formula.index(conflicting_clause)))
+    def conflict_found(self, conflicting_clause):        
         self.imp_graph.add_conflict()
         for lit in conflicting_clause:
-            self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)        
-        self.conflict = Clause()
-        for l in self.imp_graph.lit_assign_ord:
-            self.conflict.append(-l)
+            self.imp_graph.add_edge_to_conflict(-lit, conflicting_clause)
+        self.conflict = conflicting_clause
+        #self.conflict = Clause()
+        #for l in self.imp_graph.lit_assign_ord:
+        #    self.conflict.append(-l)
+        print("Found conflict at " + str(conflicting_clause) + " #" + str(self.formula.index(conflicting_clause)))
+        print(str(self) + "\n============")
         self.resolve_conflict()
         
     def backjump(self, lvl):
@@ -163,9 +171,10 @@ class Assignment:
             return
         #print("Init learnt conflict: " + str(self.conflict))
         print("level before exlaining is:" + str(self.lvl))
-        learnt_conflict = self.imp_graph.explain(self.conflict, self.last_decision[0])
+        #learnt_conflict = self.imp_graph.explain(self.conflict, self.last_decision[0])
         #print("Learnt conflict: " + str(learnt_conflict))
-        learnt_clause = -learnt_conflict
+        #learnt_clause = -learnt_conflict
+        learnt_clause = self.imp_graph.explain(self.conflict, self.last_decision[0])
         self.imp_graph.del_conflicts()
         lvls = set([self.var_assign[l.x]["lvl"] for l in learnt_clause])
         if len(lvls) == 1:
@@ -184,6 +193,7 @@ class Assignment:
         print("Conflict resolved********************************************")
         print("Current Assignment:")
         print(str(self))
+        
         if (f_len + 1) != len(self.formula):
             raise Exception("No clause learnt: " + str(learnt_clause) +"\n Old formula=" + str(f_doc) + "\nNew formula=" + str(self.formula) + "\nOriginal conflict=" + str(conf_doc) + "\nExplained=" + str(learnt_conflict) + "\nCalculated=" + str(calc_conflict))
     
@@ -214,6 +224,7 @@ class Assignment:
                     self.imp_graph.add_edge(-lit, clause, l)
         self.assign_variable(l.x, bool(l.sgn))
 
+    #DLIS    
     def get_decision(self):
         #print("Entered get_decision")
         num_clauses = [(l, len([c for c in self.cont_clauses[l] if c not in self.clause_sat])) for l in self.lits if l.x not in self.var_assign]
@@ -291,9 +302,9 @@ class Assignment:
         while not a.SAT and not a.UNSAT:
             while a.is_bcp_eligible():
                 a.bcp_iteration()
-            if a.is_bcp_eligible():
-                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            print("Assignment before deciding:" + str(a))
+            #if a.is_bcp_eligible():
+            #    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            #print("Assignment before deciding:" + str(a))
             a.decide(a.get_decision())        
         if a.SAT:
             a.decide_unassigned_variables()
