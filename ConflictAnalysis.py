@@ -110,16 +110,14 @@ class impGraph:
                 dist = impGraph.is_reachable(graph, n_key, conflict_key)[1]
                 if dist < first_uip["dist_from_conflict"]:
                     first_uip = {"node": n_key, "dist_from_conflict" : dist}
-        print("first UIP is=" + str(first_uip["node"]))
         return first_uip["node"]
 
-    #######################################################################
-    #######################################################################                    
+    #=====================================================================
+    #=====================================================================   
 
     def __init__(self, formula):
         self.nodes = dict() 
         self.edges = dict()       
-        #self.roots = list()
         self.conflicts = list()
         self.formula = formula
         self.lit_assign_ord = list()        
@@ -135,18 +133,11 @@ class impGraph:
         if edges != self.edges.keys():
             if len(edges) <= len(self.edges):
                 raise Exception("Bad Checking at previous level")
-            '''for e in edges:
-                if e not in self.edges.keys():
-                    print("This edges "+ e +" is in the following nodes, and not in the edges data structure")
-                    for n in self.nodes.values():
-                        if e in n.ingoing_key or e in n.outgoing_key:
-                            print(str(n) + " times=" + str(len([e1 for e1 in n.ingoing_key if e == e1]) + len([e1 for e1 in n.outgoing_key if e == e1])))'''
             raise Exception("More edges at nodes in/out then in edges")
         
         
     def add_root(self, literal, level):
         self.nodes[literal] = impGraph.impNode(self.impNodesTypes.Root, key=literal, literal=literal, level=level)
-        #self.roots.append(new_node)
 
     def add_literal(self, literal, level):
         self.nodes[literal] = impGraph.impNode(self.impNodesTypes.Literal, key=literal, literal=literal, level=level)
@@ -176,14 +167,9 @@ class impGraph:
         self.add_edge_internal(source_lit, clause, self.conflicts[-1])
 
     def del_node(self, node_key):
-        node = self.nodes[node_key]
-        #print("Removing Node " + str(node))
-        
+        node = self.nodes[node_key]        
         for e_key in node.outgoing_key:
-            #print("Removing " + e_key)
             target_key = self.edges[e_key].target_key            
-            #for et_key in self.nodes[target_key].ingoing_key:
-                #print("In Target " + et_key)
             self.nodes[target_key].ingoing_key.remove(e_key)            
             del self.edges[e_key]
                 
@@ -215,10 +201,7 @@ class impGraph:
         levels = lambda clause: [(self.nodes[l].level if l in self.nodes else self.nodes[-l].level) for l in clause]
         num_appear = lambda lvl, a : sum([(1 if lvl==elm else 0) for elm in a])
         first_uip_lvl = self.nodes[first_uip_key].level
-        print("UIP level appears:" + str(num_appear(first_uip_lvl, levels(clause))))
-
-        print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
-        while not ((-first_uip_literal in clause) and ((num_appear(first_uip_lvl, levels(clause)) == 1))): #or (len(set(levels(clause))) == 1))):
+        while not ((-first_uip_literal in clause) and ((num_appear(first_uip_lvl, levels(clause)) == 1))): 
             for lit in reversed(self.lit_assign_ord):
                 if -lit in clause:
                     last_assigned_literal = lit
@@ -228,8 +211,7 @@ class impGraph:
                 clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
                 it += 1
             else:
-                raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges.")# Graph is:\n" + str(self))
-            print("Clause explaining iteration " + str(it) + ", clause=" + str(clause))
+                raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges.")
         return clause
       
     def __str__(self):

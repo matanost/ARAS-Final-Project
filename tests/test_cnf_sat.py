@@ -17,15 +17,15 @@ from random import randrange, sample
 from itertools import chain
 from pysat.solvers import Glucose3
 
-toolbar_width = 10
+toolbar_width = 100
 
 # setup toolbar
 sys.stdout.write("[%s]" % (" " * toolbar_width))
 sys.stdout.flush()
 sys.stdout.write("\b" * (toolbar_width+1)) # return to start of line, after '['
 
-ITERATION_NUM = (10000 // toolbar_width) * toolbar_width
-SCALE = 10
+ITERATION_NUM = (100000 // toolbar_width) * toolbar_width
+SCALE = 30
 
 def random_formula():
     LITERAL_NUM = randrange(1, SCALE + 1)
@@ -46,9 +46,7 @@ my_sat_cnt = 0
 my_unsat_cnt = 0
 out = ""
 for ii in range(ITERATION_NUM):
-
-    for i in range(4):
-        print("******************************************************************************************************")
+       
     formula = random_formula()
     my_formula = CNF_formula.create_formula(formula)
     #print("Formula is " + str(my_formula))
