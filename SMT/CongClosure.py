@@ -59,7 +59,7 @@ class CongClosure:
         #    return bool(re.match(CongClosure.Parser.FRENN + "$", CongClosure.Parser.clean(term)))
                 
         def is_eq(phrase):
-            return bool(re.match(CongClosure.Parser.FTRE + CongClosure.Parser.EQ + CongClosure.Parser.FRE + "$", CongClosure.Parser.clean(phrase)))
+            return bool(re.match(CongClosure.Parser.FRE + CongClosure.Parser.EQ + CongClosure.Parser.FRE + "$", CongClosure.Parser.clean(phrase)))
             #phrase = CongClosure.Parser.clean(phrase)
             #if NEQ not in phrase and (phrase.count(EQ) == 1):
             #    return True
