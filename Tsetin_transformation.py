@@ -1,13 +1,12 @@
 from CNF_formula import Literal, CNF_formula
 from CNF_formula import Clause
-import  Tree
+
 
 class TsetinTransformation:
 
     def __init__(self, max_var_name):
         self.var_name = max_var_name
         self.f = CNF_formula()
-
 
     def generate_name(self):
         self.var_name += 1
