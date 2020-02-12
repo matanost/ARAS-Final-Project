@@ -17,7 +17,7 @@ class CongClosure:
         def check_cong(f1, f2):
             if not (CongClosure.Parser.is_function(f1) and CongClosure.Parser.is_function(f2)):
                 return False
-            return CongClosure.Parser.break_func(f1)[0] == CongClosure.Parser.break_func(f2)[0] #Check name equality
+            return CongClosure.Parser.break_func(f1)[0] == CongClosure.Parse.break_func(f2)[0] #Check name equality
             
         def break_func(term):
             if not CongClosure.Parser.is_function(term):
