@@ -2,13 +2,12 @@ from CNF_formula import Literal, CNF_formula
 from CNF_formula import Clause
 import  Tree
 
-
-
 class TsetinTransformation:
 
     def __init__(self, max_var_name):
         self.var_name = max_var_name
         self.f = CNF_formula()
+
 
     def generate_name(self):
         self.var_name += 1
@@ -39,10 +38,20 @@ class TsetinTransformation:
         self.f.append(c)
         return g
 
-    def or_clause(self, tseitin_literal):
+    def or_clause(self, tseitin_literal_x, tseitin_literal_y):
         g = Literal(self.generate_name())
         c = Clause()
-        c.append(self.from_iff_to_cnf(g, tseitin_literal))
+        c.append(-tseitin_literal_x)
+        c.append(g)
+        self.f.append(c)
+        c = Clause()
+        c.append(-tseitin_literal_y)
+        c.append(g)
+        self.f.append(c)
+        c = Clause()
+        c.append(tseitin_literal_x)
+        c.append(tseitin_literal_y)
+        c.append(-g)
         self.f.append(c)
         return g
 
@@ -141,12 +150,25 @@ class TsetinTransformation:
         rightC = equation.get_right_son()
 
         if leftC and rightC:
-            fn = opers[equation.get_parent()]
-            return fn(self.parser(leftC), self.parser(rightC))
+            fn = opers[equation.get_value()]
+            x = self.parser(leftC)
+            y = self.parser(rightC)
+            return fn(x,y)
+        if leftC:
+            fn = opers[equation.get_value()]
+            x = self.parser(leftC)
+            return fn(x)
+        if rightC:
+            fn = opers[equation.get_value()]
+            x = self.parser(rightC)
+            return fn(x)
         else:
-            return equation.get_parent()
+            return equation.get_value()
 
 
+    def run_TsetinTransformation(self, tree):
+        self.parser(tree)
+        return self.f
 
 
 
