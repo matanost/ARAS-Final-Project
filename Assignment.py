@@ -3,6 +3,7 @@ from CNF_formula import Literal, Sign, Clause, CNF_formula
 from ConflictAnalysis import impGraph
 from Preprocess import remove_redundant_clauses
 import copy
+import Tseitin
     
 class Assignment:
 
@@ -253,6 +254,10 @@ class Assignment:
         out += "\n"
         out += str(self.imp_graph)
         return out
+
+    @staticmethod
+    def sat_solve(formula_tree):
+        
     
     @staticmethod
     def cnf_sat_solve(formula):

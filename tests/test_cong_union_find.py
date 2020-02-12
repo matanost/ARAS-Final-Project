@@ -40,7 +40,7 @@ print(str(cc))
 if any([cc.find(keys[i]) != cc.find(keys[0]) for i in range(N)]):
     PASS = False
 
-if any([not cc.equal(cc.find(keys[i]),cc.find(keys[j])) for i in range(N) for j in range(N)]):
+if any([not cc.find(keys[i]) == cc.find(keys[j]) for i in range(N) for j in range(N)]):
     PASS = False
 
 print("Final version #2 - All has been united\n")

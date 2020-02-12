@@ -5,8 +5,8 @@ from CNF_formula import CNF_formula
 
 #Remove redundant clauses, either bacuase they are duplication of clauses, or becuase they're tautologies.
 def remove_redundant_clauses(formula):
-
-    formula = CNF_formula.create_formula(list(dict.fromkeys(formula)))
+    if not isinstance(formula, CNF_formula):
+        formula = CNF_formula.create_formula(list(dict.fromkeys(formula)))
     formula_copy = copy.deepcopy(formula)
     for clause in formula:
         if len(clause) == 0:
