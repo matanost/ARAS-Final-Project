@@ -3,7 +3,7 @@ from CNF_formula import Literal, Sign, Clause, CNF_formula
 from ConflictAnalysis import impGraph
 from Preprocess import remove_redundant_clauses
 import copy
-import Tseitin
+from Tseitin_transformation import TsetinTransformation as TT
     
 class Assignment:
 
@@ -257,7 +257,9 @@ class Assignment:
 
     @staticmethod
     def sat_solve(formula_tree):
-        
+        tt = TT(100) #TODO TT should parse the tree and find the max value.
+        formula_cnf = tt.run_TsetinTransformation(formula_tree)
+        return Assignment.cnf_sat_solve(formula_cnf)
     
     @staticmethod
     def cnf_sat_solve(formula):
