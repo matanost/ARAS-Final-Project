@@ -46,6 +46,12 @@ for p in check_phrases:
     if not cong.check_eq(p):
         print("Failed:" + p)
         PASS = False
+
+check_phrases = ["x == w1", "z == w1", "y != z", "z != y", "g(x,z) != g(z,y)", "f(x) != w1", "x != x", "x == w2"]
+for p in check_phrases:
+    if cong.check_eq(p):
+        print("Failed, should not be true:" + p)
+        PASS = False    
     
 if not PASS:
     print ("FAIL")
