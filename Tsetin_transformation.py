@@ -13,30 +13,31 @@ class TsetinTransformation:
         self.var_name += 1
         return self.var_name
 
-    def from_iff_to_cnf(self, x, y):
-        c1 = Clause()
-        c2 = Clause()
-        c1.append(-x)
-        c1.append(y)
-        c2.append(x)
-        c2.append(-y)
-        sub_f = CNF_formula()
-        sub_f.append(c1)
-        sub_f.append(c2)
-        return sub_f
+    # def from_iff_to_cnf(self, x, y):
+    #     c1 = Clause()
+    #     c2 = Clause()
+    #     c1.append(-x)
+    #     c1.append(y)
+    #     c2.append(x)
+    #     c2.append(-y)
+    #     sub_f = CNF_formula()
+    #     sub_f.append(c1)
+    #     sub_f.append(c2)
+    #     return sub_f
 
 
-    def base_case(self, literal):
-        """
-
-        :param literal:
-        :return:
-        """
-        g = Literal(self.generate_name())
-        c = Clause()
-        c.append(self.from_iff_to_cnf(g, literal))
-        self.f.append(c)
-        return g
+    # def base_case(self, literal):
+    #     """
+    #
+    #     :param literal:
+    #     :return:
+    #     """
+    #     g = Literal(self.generate_name())
+    #     c = Clause()
+    #
+    #     c.append(self.from_iff_to_cnf(g, literal))
+    #     self.f.append(c)
+    #     return g
 
     def or_clause(self, tseitin_literal_x, tseitin_literal_y):
         g = Literal(self.generate_name())
@@ -58,7 +59,12 @@ class TsetinTransformation:
     def not_clause(self, tseitin_literal):
         g = Literal(self.generate_name())
         c = Clause()
-        c.append(self.from_iff_to_cnf(g, -tseitin_literal))
+        c.append(-tseitin_literal)
+        c.append(-g)
+        self.f.append(c)
+        c = Clause()
+        c.append(tseitin_literal)
+        c.append(g)
         self.f.append(c)
         return g
 
@@ -101,10 +107,6 @@ class TsetinTransformation:
         c.append(-g)
         self.f.append(c)
         c = Clause()
-        c.append(-tseitin_literal_x)
-        c.append(g)
-        self.f.append(c)
-        c = Clause()
         c.append(-tseitin_literal_y)
         c.append(g)
         self.f.append(c)
@@ -128,11 +130,6 @@ class TsetinTransformation:
         c.append(-tseitin_literal_x)
         c.append(tseitin_literal_y)
         c.append(-g)
-        self.f.append(c)
-        c = Clause()
-        c.append(tseitin_literal_x)
-        c.append(tseitin_literal_y)
-        c.append(g)
         self.f.append(c)
         c = Clause()
         c.append(-tseitin_literal_x)
@@ -168,6 +165,9 @@ class TsetinTransformation:
 
     def run_TsetinTransformation(self, tree):
         self.parser(tree)
+        c = Clause()
+        c.append(self.var_name)
+        self.f.append(c)
         return self.f
 
 
