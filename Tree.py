@@ -79,8 +79,8 @@ class Tree:
     #     parent.set_left_son(son)
     #     self.nodes.append(son)
 
-    def create_right_son(self, parent, son_value):
-        son = Node(parent)
-        son.set_value(son_value)
-        parent.set_right_son(son)
-        self.nodes.append(son)
+    # def create_right_son(self, parent, son_value):
+    #     son = Node(parent)
+    #     son.set_value(son_value)
+    #     parent.set_right_son(son)
+    #     self.nodes.append(son)

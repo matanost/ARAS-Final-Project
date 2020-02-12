@@ -47,6 +47,7 @@ class CNF_formula:
     def __len__(self):
         return len(self.f)
 
+
     #Recieve a list of integer sets, and parse to CNF_formula
     @staticmethod
     def create_formula(clause_list):
