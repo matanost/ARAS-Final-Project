@@ -7,13 +7,15 @@ sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
 
 from CongClosure import CongClosure as CC
+from CongClosure import Parser as CCP
+from SMTSolver import SMTSolver
 
 print("Check is_function")
 functions = ["x", "f(x)", "f_Afeaf(x1)", "f(x,y)", "f(x,,t)", "f(x,a,s,)", "()", "f(,)x)", "f(x)f"]
 req_result = [False, True, True, True, True, True, False, True, False]
 PASS = True
 for i,f in enumerate(functions):
-    result = CC.Parser.is_function(f)
+    result = CCP.is_function(f)
     if result != req_result[i]:
         PASS = False
     print(f + " : out=" + str(result) + ", req=" + str(req_result[i]))
@@ -51,7 +53,13 @@ check_phrases = ["x == w1", "z == w1", "y != z", "z != y", "g(x,z) != g(z,y)", "
 for p in check_phrases:
     if cong.check_eq(p):
         print("Failed, should not be true:" + p)
-        PASS = False    
+        PASS = False
+
+smt_p = SMTSolver.Parser()
+tuf = ["a == b"]
+for t in tuf:
+    parsed = smt_p.tuf_to_tree(t)
+    print(str(parsed["tree"]) + "\n" + str(parsed["eq"]))
     
 if not PASS:
     print ("FAIL")

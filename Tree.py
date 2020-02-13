@@ -64,6 +64,12 @@ class Node:
     def get_value(self):
         return self.value
 
+    def __str__(self):
+        str_n = lambda n : "None" if (n is None) else str(n.value)
+        out = "<val=" + str_n(self) + ", parent=" + str_n(self.parent) + ", left=" + str_n(self.left_son) + ", right=" + str_n(self.right_son) +">\n"
+        out += str(self.left_son)
+        out += str(self.right_son)
+
 class Tree:
 
     def __init__(self, val):
