@@ -1,87 +1,88 @@
 
 import re
 
+class Parser:
+
+    EQ = "=="
+    NEQ = "!="
+    FRENN = "\w+[(](\w+,)*\w+[)]"
+    FRE = "\w+[(].*[)]"
+    FTRE = "\w+([(](\w+,)*\w+[)]){,1}"            
+    
+    def check_cong(f1, f2):
+        if not (Parser.is_function(f1) and Parser.is_function(f2)):
+            return False
+        return Parser.break_func(f1)[0] == Parser.break_func(f2)[0] #Check name equality
+            
+    def break_func(term):
+        if not Parser.is_function(term):
+            return (term, [])
+        term = Parser.clean(term)
+        function_name = term[:term.find("(")]
+        arguments = []
+        args_raw = Parser.clean(term[term.find("("):])
+        p_cnt = 0
+        gathered = ""
+        #print("Found args_raw=" + args_raw)
+        for c in args_raw:
+            if c == "(":
+                gathered += c
+                p_cnt += 1
+            elif c == ")":
+                gathered += c
+                p_cnt -= 1
+            elif p_cnt == 0 and  c == ",":
+                if len(gathered) > 0:
+                    arguments.append(gathered)
+                gathered = ""
+            else:
+                gathered += c
+        if len(gathered) > 0:
+            arguments.append(gathered)
+        return (function_name, arguments)
+        
+    def clean(string):
+        string = string.rstrip().strip().replace(" ", "")
+        while string.startswith("(") and string.endswith(")"):
+            string = string[1:-1]
+        return string
+
+    def is_function(term):
+        return bool(re.match(Parser.FRE + "$", Parser.clean(term)))
+
+    #def is_function_not_nesting(term):
+    #    return bool(re.match(Parser.FRENN + "$", Parser.clean(term)))
+                
+    def is_eq(phrase):
+        return bool(re.match(Parser.FRE + Parser.EQ + Parser.FRE + "$", Parser.clean(phrase)))
+    #phrase = Parser.clean(phrase)
+    #if NEQ not in phrase and (phrase.count(EQ) == 1):
+    #    return True
+    #return False
+
+    def is_neq(phrase):
+        return bool(re.match(Parser.FRE + Parser.NEQ + Parser.FRE + "$", Parser.clean(phrase)))
+    #phrase = Parser.clean(phrase)
+    #if EQ not in phrase and (phrase.count(NEQ) == 1):
+    #    return True
+    #return False
+    
+    def split_tuf_eq(phrase):
+        phrase = Parser.clean(phrase)
+        if (phrase.count(Parser.EQ) > 1) or (phrase.count(Parser.NEQ) > 1) or (Parser.EQ in phrase and Parser.NEQ in phrase):
+            raise Exception("Bad Phrase - more than a single equality term:" + phrase)
+        if   Parser.EQ     in phrase and Parser.NEQ not in phrase:
+            sep = Parser.EQ
+        elif Parser.EQ not in phrase and Parser.NEQ     in phrase:
+            sep =Parser. NEQ
+        split_phrase = phrase.split(sep)
+        return(Parser.clean(split_phrase[0]),sep,Parser.clean(split_phrase[1]))
+
 class CongClosure: 
 
     #===========================================================================================
     #===========================================================================================    
 
-    class Parser:
-
-        EQ = "=="
-        NEQ = "!="
-        FRENN = "\w+[(](\w+,)*\w+[)]"
-        FRE = "\w+[(].*[)]"
-        FTRE = "\w+([(](\w+,)*\w+[)]){,1}"            
-
-        def check_cong(f1, f2):
-            if not (CongClosure.Parser.is_function(f1) and CongClosure.Parser.is_function(f2)):
-                return False
-            return CongClosure.Parser.break_func(f1)[0] == CongClosure.Parser.break_func(f2)[0] #Check name equality
-            
-        def break_func(term):
-            if not CongClosure.Parser.is_function(term):
-                return (term, [])
-            term = CongClosure.Parser.clean(term)
-            function_name = term[:term.find("(")]
-            arguments = []
-            args_raw = CongClosure.Parser.clean(term[term.find("("):])
-            p_cnt = 0
-            gathered = ""
-            #print("Found args_raw=" + args_raw)
-            for c in args_raw:
-                if c == "(":
-                    gathered += c
-                    p_cnt += 1
-                elif c == ")":
-                    gathered += c
-                    p_cnt -= 1
-                elif p_cnt == 0 and  c == ",":
-                    if len(gathered) > 0:
-                        arguments.append(gathered)
-                    gathered = ""
-                else:
-                    gathered += c
-            if len(gathered) > 0:
-                arguments.append(gathered)
-            return (function_name, arguments)
-        
-        def clean(string):
-            string = string.rstrip().strip().replace(" ", "")
-            while string.startswith("(") and string.endswith(")"):
-                string = string[1:-1]
-            return string
-
-        def is_function(term):
-            return bool(re.match(CongClosure.Parser.FRE + "$", CongClosure.Parser.clean(term)))
-
-        #def is_function_not_nesting(term):
-        #    return bool(re.match(CongClosure.Parser.FRENN + "$", CongClosure.Parser.clean(term)))
-                
-        def is_eq(phrase):
-            return bool(re.match(CongClosure.Parser.FRE + CongClosure.Parser.EQ + CongClosure.Parser.FRE + "$", CongClosure.Parser.clean(phrase)))
-            #phrase = CongClosure.Parser.clean(phrase)
-            #if NEQ not in phrase and (phrase.count(EQ) == 1):
-            #    return True
-            #return False
-
-        def is_neq(phrase):
-            return bool(re.match(CongClosure.Parser.FRE + CongClosure.Parser.NEQ + CongClosure.Parser.FRE + "$", CongClosure.Parser.clean(phrase)))
-            #phrase = CongClosure.Parser.clean(phrase)
-            #if EQ not in phrase and (phrase.count(NEQ) == 1):
-            #    return True
-            #return False
-    
-        def split_tuf_eq(phrase):
-            phrase = CongClosure.Parser.clean(phrase)
-            if (phrase.count(CongClosure.Parser.EQ) > 1) or (phrase.count(CongClosure.Parser.NEQ) > 1) or (CongClosure.Parser.EQ in phrase and CongClosure.Parser.NEQ in phrase):
-                raise Exception("Bad Phrase - more than a single equality term:" + phrase)
-            if   CongClosure.Parser.EQ     in phrase and CongClosure.Parser.NEQ not in phrase:
-                sep = CongClosure.Parser.EQ
-            elif CongClosure.Parser.EQ not in phrase and CongClosure.Parser.NEQ     in phrase:
-                sep =CongClosure.Parser. NEQ
-            split_phrase = phrase.split(sep)
-            return(CongClosure.Parser.clean(split_phrase[0]),sep,CongClosure.Parser.clean(split_phrase[1]))
 
     #===========================================================================================
     #===========================================================================================        
@@ -103,11 +104,11 @@ class CongClosure:
 
     def parse_term(self, term):
         subterms = set()
-        if not CongClosure.Parser.is_function(term):
+        if not Parser.is_function(term):
             name = term
             args = []
         else:
-            name, args = CongClosure.Parser.break_func(term)
+            name, args = Parser.break_func(term)
         for arg in args:
             (arg_name, arg_subterms) = self.parse_term(arg)
             subterms.add(arg)
@@ -127,7 +128,7 @@ class CongClosure:
     def create_database(self, phrases):
         subterms = set()
         for p in phrases:
-            (lhs, op, rhs) = CongClosure.Parser.split_tuf_eq(p)
+            (lhs, op, rhs) = Parser.split_tuf_eq(p)
             (lhs_name, lhs_subterms) = self.parse_term(lhs)
             (rhs_name, rhs_subterms) = self.parse_term(rhs)
             subterms.add(lhs)
@@ -140,16 +141,16 @@ class CongClosure:
 
     def enforce_eq(self, phrases):
         for phrase in phrases:
-            (lhs, op, rhs) = CongClosure.Parser.split_tuf_eq(phrase)
-            if op != CongClosure.Parser.EQ:
+            (lhs, op, rhs) = Parser.split_tuf_eq(phrase)
+            if op != Parser.EQ:
                 raise Exception("Cannot enforce phrase which is not equality phrase")
             self.union(lhs,rhs)
 
     def check_eq(self, phrase):
-        (lhs, op, rhs) = CongClosure.Parser.split_tuf_eq(phrase)
-        if op == CongClosure.Parser.EQ:
+        (lhs, op, rhs) = Parser.split_tuf_eq(phrase)
+        if op == Parser.EQ:
             return self.find(lhs) == self.find(rhs)
-        if op == CongClosure.Parser.NEQ:
+        if op == Parser.NEQ:
             return self.find(lhs) != self.find(rhs)
         else: 
             raise Exception("Cannot check phrase which is not equality or inequality phrase")           
@@ -184,8 +185,8 @@ class CongClosure:
 
         for px in x_parents:
             for py in y_parents:
-                name_px, args_px = CongClosure.Parser.break_func(px)
-                name_py, args_py = CongClosure.Parser.break_func(py)
+                name_px, args_px = Parser.break_func(px)
+                name_py, args_py = Parser.break_func(py)
                 if len(args_px) == len(args_py) and name_px == name_py:                    
                     if all([self.find(item[0]) == self.find(item[1]) for item in zip(args_px, args_py)]):
                         self.union(px, py)      
