@@ -3,7 +3,7 @@ from CNF_formula import Literal, Sign, Clause, CNF_formula
 from ConflictAnalysis import impGraph
 from Preprocess import remove_redundant_clauses
 import copy
-from Tseitin_transformation import TsetinTransformation as TT
+from Tsetin_transformation import TsetinTransformation as TT
     
 class Assignment:
 
@@ -33,7 +33,13 @@ class Assignment:
             if l != -lit:
                 new_clause.append(l)
         return new_clause
-            
+
+    def all_var_assigned(self):
+        return len(self.var_assign.keys()) == len(self.varis)
+    
+    def get_assignment(self):
+        return set([Literal(var, Sign.POS if self.var_assign[var]["val"] else Sign.NEG) for var in self.var_assign])
+    
     def satisfy_clause(self, c):        
         self.clause_sat.add(c)
         if c in self.watch_lits:
@@ -178,6 +184,9 @@ class Assignment:
         self.last_decision.insert(0,l)
         self.assign_variable(l.x, bool(l.sgn))    
 
+    def get_unassigned(self):
+        return [v for v in self.varis if v not in self.var_assign]
+        
     def decide_unassigned_variables(self):
         if len(self.clause_sat) != len(self.formula):
             raise Exception("SAT when not all clauses are sat")

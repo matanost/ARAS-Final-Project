@@ -1,8 +1,13 @@
 
-from CNF_formula import Literal
+
+from CNF_formula import Literal, Clause, Sign
 from Tsetin_transformation import TsetinTransformation as TT
 from Tree import Node as TN
 from CongClosure import Parser as CCP
+from Assignment import Assignment as As
+from CongClosure import CongClosure as CC
+from Preprocess import remove_redundant_clauses
+
 import re
 
 class SMTSolver:
@@ -14,7 +19,8 @@ class SMTSolver:
             self.legal_2ops = ["+", "*", "->", "<->"]
             self.legal_1ops = ["-"]
             self.match_2op_re = "([(].*[)])(\W+)([(].*[)])$"
-            self.match_1op_re = "(-)([(].*[)])$"             
+            self.match_1op_re = "(-)([(].*[)])$"
+            self.var2eq = dict()
                 
         def tuf_to_tree(self, tuf): #TODO
             tuf = tuf.strip().rstrip().replace(" ","")
@@ -25,6 +31,7 @@ class SMTSolver:
             if not bool(match_1op) and not bool(match_2op):
                 lit = self.avail_literal
                 self.avail_literal += 1
+                self.var2eq[lit.x] = tuf
                 return {"tree" : TN(None, (-lit if CCP.is_neq(tuf) else lit)), "eq" : [tuf]}
             if bool(match_1op):             
                 op = match_1op.group(1)
@@ -69,44 +76,47 @@ class SMTSolver:
     #===========================================================================================
     #===========================================================================================
 
-    
-    
+    def __init__(self): #TODO
+        self.t_prop_elig = set()
+
+    def is_t_prop_eligible(self, assignments, phrases):
+        pass
+
+    def solve_cnf(self, formula, var2eq):
+        formula = remove_redundant_clauses(formula)
+        if len(formula) == 0:
+            return True, []
+        a = As(formula)
+        while not (a.SAT and a.all_var_assigned()) and not a.UNSAT:
+            print("Start")
+            if a.is_bcp_eligible(): #TODO add T-propegate
+                print("BCP")
+                a.bcp_iteration()
+            else:
+                print("decide")
+                if a.SAT:
+                    a.decide(Literal(a.get_unassigned()[0], Sign.POS))
+                else:    
+                    a.decide(a.get_decision())
+            if a.UNSAT:
+                break
+            cc = CC() #inefficient
+            phrases = [eq for eq in var2eq.values() if eq is not None] #inefficient
+            print(str(phrases))
+            cc.create_database(phrases)
+            assigned_lits = a.get_assignment()
+            pos_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and     bool(l.sgn)]
+            neg_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and not bool(l.sgn)]
+            cc.enforce_eq([var2eq[v] for v in pos_vars])
+            if any([not cc.check_eq(var2eq[v]) for v in neg_vars]):
+                print("T - conflict")
+                #print(str(a))
+                formula.append(Clause.create_clause(set([int(-lit) for lit in assigned_lits])))
+                a = As(formula) #Reset
+        if a.SAT:
+            return True, [int(l) for l in a.get_assignment()], formula
+        return False, None, formula 
+                    
+            
     #===========================================================================================
     #===========================================================================================
-    
-    def propagate():
-        pass
-
-    def decide():
-        pass
-
-    def conflict():
-        pass
-
-    def explain():
-        pass
-
-    def backjump():
-        pass
-
-    def fail():
-        pass
-
-    def t_conflict():
-        pass
-
-    def t_propagate():
-        pass
-
-    def t_explain():
-        pass
-
-    def learn():
-        pass
-
-    def forget():
-        pass
-
-    def restart():
-        pass
-    

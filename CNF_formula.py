@@ -99,6 +99,9 @@ class Literal:
     def __str__(self):
         return ("" if self.sgn else "-") + str(self.x)
 
+    def __int__(lit):
+        return lit.x * (1 if bool(lit.sgn) else -1)
+
 class Clause:
     def __init__(self):
         self.c = frozenset()
