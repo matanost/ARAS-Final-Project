@@ -102,13 +102,15 @@ class SMTSolver:
                 break
             cc = CC() #inefficient
             phrases = [eq for eq in var2eq.values() if eq is not None] #inefficient
-            print(str(phrases))
+            #print(str(phrases))
             cc.create_database(phrases)
             assigned_lits = a.get_assignment()
+            #print(str([str(l) for l in assigned_lits]))
             pos_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and     bool(l.sgn)]
             neg_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and not bool(l.sgn)]
             cc.enforce_eq([var2eq[v] for v in pos_vars])
-            if any([not cc.check_eq(var2eq[v]) for v in neg_vars]):
+            #print(str(neg_vars))
+            if any([cc.check_eq(var2eq[v]) for v in neg_vars]):
                 print("T - conflict")
                 #print(str(a))
                 formula.append(Clause.create_clause(set([int(-lit) for lit in assigned_lits])))

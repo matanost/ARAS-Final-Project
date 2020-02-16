@@ -148,7 +148,10 @@ class CongClosure:
 
     def check_eq(self, phrase):
         (lhs, op, rhs) = Parser.split_tuf_eq(phrase)
+        #print("LHS=" + lhs + ",OP=" + op + ",RHS=" + rhs)
         if op == Parser.EQ:
+            #print(str(self.find(lhs)) + "," + str(self.find(rhs)))
+            #print(str(self.find(lhs) == self.find(rhs)))
             return self.find(lhs) == self.find(rhs)
         if op == Parser.NEQ:
             return self.find(lhs) != self.find(rhs)
