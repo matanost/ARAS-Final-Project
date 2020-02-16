@@ -76,48 +76,64 @@ class SMTSolver:
     #===========================================================================================
     #===========================================================================================
 
-    def __init__(self): #TODO
-        self.t_prop_elig = set()
+    def __init__(self):
+        self.phrases = list()
+        self.a = None
+        self.cc = None
 
-    def is_t_prop_eligible(self, assignments, phrases):
-        pass
+    def split_pos_neg_vars(self):
+        assigned_lits = self.a.get_assignment()
+        pos_vars = [l.x for l in assigned_lits if self.var2eq[l.x] is not None and     bool(l.sgn)]
+        neg_vars = [l.x for l in assigned_lits if self.var2eq[l.x] is not None and not bool(l.sgn)]
+        return pos_vars, neg_vars
+
+    def is_t_conflict(self):        
+        pos, neg = self.split_pos_neg_vars()
+        self.cc.enforce_eq([self.var2eq[v] for v in pos])
+        return any([self.cc.check_eq(self.var2eq[v]) for v in neg])
+
+    def t_prop(self):
+        for var in [v for v in self.a.get_unassigned() if self.var2eq[v] is not None]:
+            if self.cc.check_eq(self.var2eq[var]):
+                self.a.decide(Literal(var, Sign.POS))
+                print("TProp: " + self.var2eq[var])
+                return True
+        return False
+
+    def reset_assignment(self):
+        self.cc = CC() #inefficient
+        self.cc.create_database(self.phrases)
+        self.a = As(self.formula)
 
     def solve_cnf(self, formula, var2eq):
-        formula = remove_redundant_clauses(formula)
-        if len(formula) == 0:
+        self.var2eq = var2eq
+        self.formula = remove_redundant_clauses(formula)
+        self.phrases = [eq for eq in self.var2eq.values() if eq is not None]
+        if len(self.formula) == 0:
             return True, []
-        a = As(formula)
-        while not (a.SAT and a.all_var_assigned()) and not a.UNSAT:
-            print("Start")
-            if a.is_bcp_eligible(): #TODO add T-propegate
+        self.reset_assignment()
+        while not (self.a.SAT and self.a.all_var_assigned()) and not self.a.UNSAT:
+            if self.t_prop():
+                continue
+            if self.a.is_bcp_eligible(): #TODO add T-propegate
                 print("BCP")
-                a.bcp_iteration()
+                self.a.bcp_iteration()
             else:
-                print("decide")
-                if a.SAT:
-                    a.decide(Literal(a.get_unassigned()[0], Sign.POS))
-                else:    
-                    a.decide(a.get_decision())
-            if a.UNSAT:
+                if self.a.SAT:
+                    self.a.decide(Literal(self.a.get_unassigned()[0], Sign.POS))
+                else:
+                    print("Decide")
+                    self.a.decide(self.a.get_decision())
+            if self.a.UNSAT:
                 break
-            cc = CC() #inefficient
-            phrases = [eq for eq in var2eq.values() if eq is not None] #inefficient
-            #print(str(phrases))
-            cc.create_database(phrases)
-            assigned_lits = a.get_assignment()
-            #print(str([str(l) for l in assigned_lits]))
-            pos_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and     bool(l.sgn)]
-            neg_vars = [l.x for l in assigned_lits if var2eq[l.x] is not None and not bool(l.sgn)]
-            cc.enforce_eq([var2eq[v] for v in pos_vars])
-            #print(str(neg_vars))
-            if any([cc.check_eq(var2eq[v]) for v in neg_vars]):
-                print("T - conflict")
-                #print(str(a))
-                formula.append(Clause.create_clause(set([int(-lit) for lit in assigned_lits])))
-                a = As(formula) #Reset
-        if a.SAT:
-            return True, [int(l) for l in a.get_assignment()], formula
-        return False, None, formula 
+            
+            if self.is_t_conflict():
+                print("TConflict")
+                self.formula.append(Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))) #TODO explain
+                self.reset_assignment() #inefficient                
+        if self.a.SAT:
+            return True, [int(l) for l in self.a.get_assignment()], self.formula
+        return False, None, self.formula 
                     
             
     #===========================================================================================
