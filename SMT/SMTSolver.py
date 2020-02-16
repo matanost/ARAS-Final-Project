@@ -80,30 +80,34 @@ class SMTSolver:
         self.phrases = list()
         self.a = None
         self.cc = None
+        self.var2eq = None
+        self.formula = None
 
-    def split_pos_neg_vars(self):
+    def split_pos_neg(self):
         assigned_lits = self.a.get_assignment()
-        pos_vars = [l.x for l in assigned_lits if self.var2eq[l.x] is not None and     bool(l.sgn)]
-        neg_vars = [l.x for l in assigned_lits if self.var2eq[l.x] is not None and not bool(l.sgn)]
-        return pos_vars, neg_vars
+        pos = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and     bool(l.sgn)]
+        neg = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and not bool(l.sgn)]
+        return pos, neg
 
     def is_t_conflict(self):        
-        pos, neg = self.split_pos_neg_vars()
-        self.cc.enforce_eq([self.var2eq[v] for v in pos])
-        return any([self.cc.check_eq(self.var2eq[v]) for v in neg])
+        pos, neg = self.split_pos_neg()
+        self.cc.enforce_eq(pos)
+        return any([self.cc.check_eq(eq) for eq in neg])
 
-    def t_prop(self):
+    def t_prop(self):        
+        self.cc.enforce_eq(self.split_pos_neg()[0])
         for var in [v for v in self.a.get_unassigned() if self.var2eq[v] is not None]:
             if self.cc.check_eq(self.var2eq[var]):
-                self.a.decide(Literal(var, Sign.POS))
-                print("TProp: " + self.var2eq[var])
+                self.a.decide(Literal(var, Sign.POS))                
                 return True
         return False
 
-    def reset_assignment(self):
-        self.cc = CC() #inefficient
-        self.cc.create_database(self.phrases)
-        self.a = As(self.formula)
+    def reset_assignment(self, RESET=True, clause=None):
+        if RESET:
+            self.cc = CC()
+            self.cc.create_database(self.phrases)
+            self.a = As(self.formula)
+            return
 
     def solve_cnf(self, formula, var2eq):
         self.var2eq = var2eq
@@ -115,22 +119,20 @@ class SMTSolver:
         while not (self.a.SAT and self.a.all_var_assigned()) and not self.a.UNSAT:
             if self.t_prop():
                 continue
-            if self.a.is_bcp_eligible(): #TODO add T-propegate
-                print("BCP")
+            if self.a.is_bcp_eligible():
                 self.a.bcp_iteration()
             else:
                 if self.a.SAT:
                     self.a.decide(Literal(self.a.get_unassigned()[0], Sign.POS))
                 else:
-                    print("Decide")
                     self.a.decide(self.a.get_decision())
             if self.a.UNSAT:
-                break
-            
+                break            
             if self.is_t_conflict():
-                print("TConflict")
-                self.formula.append(Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))) #TODO explain
-                self.reset_assignment() #inefficient                
+                #TODO explain
+                new_clause = Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))
+                self.formula.append(new_clause)
+                self.reset_assignment(clause=new_clause)
         if self.a.SAT:
             return True, [int(l) for l in self.a.get_assignment()], self.formula
         return False, None, self.formula 
