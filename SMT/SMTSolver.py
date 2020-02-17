@@ -16,32 +16,44 @@ class SMTSolver:
 
         def __init__(self):        
             self.avail_literal = 1
-            self.legal_2ops = ["+", "*", "->", "<->"]
-            self.legal_1ops = ["-"]
             self.match_2op_re = "([(].*[)])(\W+)([(].*[)])$"
             self.match_1op_re = "(-)([(].*[)])$"
             self.var2eq = dict()
+            self.op_translate = {"+":"OR", "*":"AND", "->":"IF", "<->":"IFF", "-":"NOT"}
+
+        def reset(self):
+            self.avail_literal = 1
+            self.var2eq = dict()
+
+        def clean_recursion(self, string):
+            if string.startswith("(") and string.endswith(")"):
+                string = string[1:-1]
+            return string.rstrip().strip().replace(" ", "")                
                 
         def tuf_to_tree(self, tuf): #TODO
             tuf = tuf.strip().rstrip().replace(" ","")
-            match_2op = re.match(self.match_2op_re,tuf)
-            match_1op = re.match(self.match_1op_re,tuf)                        
+            #print("Parsing " + tuf)
+            match_2op, match_1op = re.match(self.match_2op_re,tuf), re.match(self.match_1op_re,tuf)
             if bool(match_1op) and bool(match_2op):
                 raise Exception("Both 2op and 1op matched: tuf=" + tuf)
-            if not bool(match_1op) and not bool(match_2op):
+            elif not bool(match_1op) and not bool(match_2op):
+                for var, eq in self.var2eq.items():
+                    if eq == tuf:
+                        return TN(None, var)
+                    if eq == CCP.negate(tuf):
+                        return TN(None, -var)
                 lit = self.avail_literal
                 self.avail_literal += 1
-                self.var2eq[lit.x] = tuf
-                return {"tree" : TN(None, (-lit if CCP.is_neq(tuf) else lit)), "eq" : [tuf]}
-            if bool(match_1op):             
-                op = match_1op.group(1)
-                lhs = None
-                rhs = match_1op.group(2)
-                right_tree = SMTSolver.Parser.tuf_to_tree(rhs)
-            if bool(match_2op):
-                terms = []
-                p_cnt = 0
-                gathered = ""
+                if CCP.is_neq(tuf):
+                    tuf, lit = CCP.negate(tuf), -lit
+                self.var2eq[abs(lit)] = tuf
+                #return {"tree" : TN(None, (-lit if CCP.is_neq(tuf) else lit)), "eq" : [tuf]}
+                return TN(None, lit)
+            elif bool(match_1op):             
+                lhs, op, rhs  = None, match_1op.group(1), match_1op.group(2)
+                right_tree = self.tuf_to_tree(self.clean_recursion(rhs))
+            elif bool(match_2op):
+                terms, p_cnt, gathered = [], 0, ""
                 for c in tuf:
                     if c in ["(", ")"]:
                         if (c is "(" and p_cnt == 0) or (c is ")" and p_cnt == 1):
@@ -55,23 +67,23 @@ class SMTSolver:
                         gathered += c
                 if len(gathered) > 0:
                     terms.append(gathered)
-                lhs = terms[0]
-                op = terms[1]
-                rhs = terms[2]
-                left_tree = SMTSolver.Parser.tuf_to_tree(lhs)
-                right_tree = SMTSolver.Parser.tuf_to_tree(rhs)
+                #print(str(terms))
+                lhs, op, rhs = terms[0], terms[1], terms[2]
+                left_tree, right_tree = self.tuf_to_tree(lhs), self.tuf_to_tree(rhs)
 
-            new_node = TN(None, op)
-            equalities = []
+            new_node, equalities = TN(None, self.op_translate[op]), []
             if rhs:
-                new_node.right_son = right_tree["tree"]
+                #new_node.right_son = right_tree["tree"]
+                new_node.right_son = right_tree
                 new_node.right_son.parent = new_node
-                equalities += right_tree["eq"]
+                #equalities += right_tree["eq"]
             if lhs:
-                new_node.left_son = left_tree["tree"]
+                #new_node.left_son = left_tree["tree"]
+                new_node.left_son = left_tree
                 new_node.left_son.parent = new_node
-                equalities += left_tree["eq"]
-            return {"tree" : new_node, "eq" : equalities}
+                #equalities += left_tree["eq"]
+            #return {"tree" : new_node, "eq" : equalities}
+            return new_node
 
     #===========================================================================================
     #===========================================================================================
@@ -82,6 +94,7 @@ class SMTSolver:
         self.cc = None
         self.var2eq = None
         self.formula = None
+        self.smt_parser = SMTSolver.Parser()
 
     def split_pos_neg(self):
         assigned_lits = self.a.get_assignment()
@@ -109,7 +122,29 @@ class SMTSolver:
             self.a = As(self.formula)
             return
 
+    def solve(self, tuf): #TODO remove prints
+        self.smt_parser.reset()
+        formula_tree = self.smt_parser.tuf_to_tree(tuf)
+        print(formula_tree)
+        print(self.smt_parser.var2eq.values())
+        tt = TT(self.smt_parser.avail_literal-1)
+        formula_cnf = tt.run_TsetinTransformation(formula_tree)
+        formula_cnf = remove_redundant_clauses(formula_cnf)
+        print(formula_cnf)
+        sat, assignment, formula_learnt = self.solve_cnf(formula_cnf, self.smt_parser.var2eq)
+        print(assignment)
+        pos, neg = self.split_pos_neg()
+        if sat:
+            return sat, pos + [CCP.negate(n) for n in neg]
+        return sat, []
+
     def solve_cnf(self, formula, var2eq):
+        varis = set()
+        for c in formula:
+            for l in c:
+                varis.add(l.x)
+        for var in [v for v in varis if v not in var2eq]:
+            var2eq[var] = None
         self.var2eq = var2eq
         self.formula = remove_redundant_clauses(formula)
         self.phrases = [eq for eq in self.var2eq.values() if eq is not None]

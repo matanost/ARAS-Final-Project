@@ -148,7 +148,7 @@ class TsetinTransformation:
 
     def parser(self, equation):
         opers = {'NOT': self.not_clause, 'OR': self.or_clause,
-                 'AND': self.if_clause, 'IF': self.if_clause,
+                 'AND': self.and_clause, 'IF': self.if_clause,
                  'IFF': self.iff_clause}
 
         leftC = equation.get_left_son()

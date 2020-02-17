@@ -174,7 +174,7 @@ class Assignment:
         self.conflict = None
         
         if (f_len + 1) != len(self.formula):
-            raise Exception("No clause learnt: " + str(learnt_clause) +"\n Old formula=" + str(f_doc) + "\nNew formula=" + str(self.formula) + "\nOriginal conflict=" + str(conf_doc) + "\nExplained=" + str(learnt_conflict) + "\nCalculated=" + str(calc_conflict))
+            raise Exception("No clause learnt: " + str(learnt_clause) +"\n Old formula=" + str(f_doc) + "\nNew formula=" + str(self.formula) + "\nOriginal conflict=" + str(conf_doc) + "\nExplained=" + str(learnt_clause) + "\nCalculated=" + str(calc_conflict))
     
     def decide(self, l):
         if l is None:

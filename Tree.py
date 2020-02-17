@@ -65,10 +65,21 @@ class Node:
         return self.value
 
     def __str__(self):
-        str_n = lambda n : "None" if (n is None) else str(n.value)
-        out = "<val=" + str_n(self) + ", parent=" + str_n(self.parent) + ", left=" + str_n(self.left_son) + ", right=" + str_n(self.right_son) +">\n"
-        out += str(self.left_son)
-        out += str(self.right_son)
+        if self.right_son is None and self.left_son is None:
+            return str(self.value)
+        rhs = str(self.right_son) if self.right_son is not None else ""
+        lhs = str(self.left_son) if self.left_son is not None else ""
+        op = str(self.value)
+        if self.right_son is None and self.left_son is not None:        
+            return "(" + op + " " + lhs + ")"
+        if self.right_son is not None and self.left_son is None:        
+            return "(" + op + " " + rhs + ")"
+        return "(" + lhs + " " + op + " " + rhs + ")"        
+            
+        #str_n = lambda n : "None" if (n is None) else str(n.value)
+        #out = "<val=" + str_n(self) + ", parent=" + str_n(self.parent) + ", left=" + str_n(self.left_son) + ", right=" + str_n(self.right_son) +">\n"
+        #out += str(self.left_son)
+        #out += str(self.right_son)
 
 class Tree:
 

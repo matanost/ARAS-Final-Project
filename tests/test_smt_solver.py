@@ -77,7 +77,37 @@ for i, f in enumerate(formulas):
     print("Formula at end=" + str(results[i][2]) + "\n")
     if results[i][0] != req_result[i]:
         PASS = False
-        fails.add(i)
+        fails.add((1,i))
+
+#==================================================================================================
+#==================================================================================================
+
+formulas = list()
+results = list()
+req_result = list()
+
+formulas.append("(((x==y)+(x==z))*((f(x)==f(y))+(f(x)==f(z))))*(((f(f(x))==f(f(y)))+(f(f(x))==f(f(z))))*(f(f(f(y)))!=f(f(f(z)))))")
+req_result.append(True)
+
+formulas.append("(((x==y)+(x==z))*((f(x)==f(y))+(f(x)==f(z))))*(((f(f(x))==f(f(y)))+(f(f(x))==f(f(z))))*(f(f(f(y)))==f(g(f(z)))))")
+req_result.append(True)
+
+
+formulas.append("(a==b)*(b==c)")
+req_result.append(True)
+
+formulas.append("(a==b)*(-(a==b))")
+req_result.append(False)
+
+fails = set()
+smt = SMT()
+for i, f in enumerate(formulas):
+    results.append(smt.solve(f))
+    print("SAT("+str(i)+")= " + str(results[i][0]) + ", Assingment("+str(i)+")=" + str(results[i][1]) + "\n")
+    if results[i][0] != req_result[i]:
+        PASS = False
+        fails.add((2,i))
+
 
 if not PASS:
     print ("FAIL")
