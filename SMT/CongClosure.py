@@ -73,6 +73,8 @@ class Parser:
             sep = Parser.EQ
         elif Parser.EQ not in phrase and Parser.NEQ     in phrase:
             sep =Parser. NEQ
+        else:
+            return Parser.clean(phrase)
         split_phrase = phrase.split(sep)
         return(Parser.clean(split_phrase[0]),sep,Parser.clean(split_phrase[1]))
 

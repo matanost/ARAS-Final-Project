@@ -21,11 +21,13 @@ formulas.append("-(d )")
 formulas.append("-((a)*(b))")
 formulas.append("(a==b)*((b)+(c))")
 formulas.append("((a==b)*((b)+(c)))+(a!=b)")
+formulas.append("(a <= b)+(c > d)")
+formulas.append("((a <= b)+(c >= d))*((a > b) + (c < d))")
 
 for f in formulas:
+    parser.reset(f)
     print(f + " => " + str(parser.tuf_to_tree(f)))
-    print(str(parser.var2eq.values()))
-    parser.reset()
+    print(str(parser.var2eq.items()))
 
 if not PASS:
     print ("FAIL")
