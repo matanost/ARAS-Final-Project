@@ -102,6 +102,7 @@ req_result.append(False)
 fails = set()
 smt = SMT()
 for i, f in enumerate(formulas):
+    print("Solving f=" + str(f))
     results.append(smt.solve(f))
     print("SAT("+str(i)+")= " + str(results[i][0]) + ", Assingment("+str(i)+")=" + str(results[i][1]) + "\n")
     if results[i][0] != req_result[i]:

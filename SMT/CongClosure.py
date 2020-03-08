@@ -24,7 +24,6 @@ class Parser:
         args_raw = Parser.clean(term[term.find("("):])
         p_cnt = 0
         gathered = ""
-        #print("Found args_raw=" + args_raw)
         for c in args_raw:
             if c == "(":
                 gathered += c
@@ -116,8 +115,6 @@ class CongClosure:
         self.make_sets([term])
         subterms.add(term)
         for arg in args:
-            if arg not in self.terms:
-                print(str(self.terms))
             self.terms[arg].parents =  frozenset.union(self.terms[arg].parents, frozenset({term})) #Add name too?
         return (name,subterms)
             
@@ -147,10 +144,7 @@ class CongClosure:
 
     def check_eq(self, phrase):
         (lhs, op, rhs) = Parser.split_tuf_eq(phrase)
-        #print("LHS=" + lhs + ",OP=" + op + ",RHS=" + rhs)
         if op == Parser.EQ:
-            #print(str(self.find(lhs)) + "," + str(self.find(rhs)))
-            #print(str(self.find(lhs) == self.find(rhs)))
             return self.find(lhs) == self.find(rhs)
         if op == Parser.NEQ:
             return self.find(lhs) != self.find(rhs)

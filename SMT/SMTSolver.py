@@ -30,9 +30,8 @@ class SMTSolver:
                 string = string[1:-1]
             return string.rstrip().strip().replace(" ", "")                
                 
-        def tuf_to_tree(self, tuf): #TODO
+        def tuf_to_tree(self, tuf):
             tuf = tuf.strip().rstrip().replace(" ","")
-            #print("Parsing " + tuf)
             match_2op, match_1op = re.match(self.match_2op_re,tuf), re.match(self.match_1op_re,tuf)
             if bool(match_1op) and bool(match_2op):
                 raise Exception("Both 2op and 1op matched: tuf=" + tuf)
@@ -47,7 +46,6 @@ class SMTSolver:
                 if CCP.is_neq(tuf):
                     tuf, lit = CCP.negate(tuf), -lit
                 self.var2eq[abs(lit)] = tuf
-                #return {"tree" : TN(None, (-lit if CCP.is_neq(tuf) else lit)), "eq" : [tuf]}
                 return TN(None, lit)
             elif bool(match_1op):             
                 lhs, op, rhs  = None, match_1op.group(1), match_1op.group(2)
@@ -67,22 +65,16 @@ class SMTSolver:
                         gathered += c
                 if len(gathered) > 0:
                     terms.append(gathered)
-                #print(str(terms))
                 lhs, op, rhs = terms[0], terms[1], terms[2]
                 left_tree, right_tree = self.tuf_to_tree(lhs), self.tuf_to_tree(rhs)
 
             new_node, equalities = TN(None, self.op_translate[op]), []
             if rhs:
-                #new_node.right_son = right_tree["tree"]
                 new_node.right_son = right_tree
                 new_node.right_son.parent = new_node
-                #equalities += right_tree["eq"]
             if lhs:
-                #new_node.left_son = left_tree["tree"]
                 new_node.left_son = left_tree
                 new_node.left_son.parent = new_node
-                #equalities += left_tree["eq"]
-            #return {"tree" : new_node, "eq" : equalities}
             return new_node
 
     #===========================================================================================
@@ -122,17 +114,13 @@ class SMTSolver:
             self.a = As(self.formula)
             return
 
-    def solve(self, tuf): #TODO remove prints
+    def solve(self, tuf):
         self.smt_parser.reset()
-        formula_tree = self.smt_parser.tuf_to_tree(tuf)
-        print(formula_tree)
-        print(self.smt_parser.var2eq.values())
+        formula_tree = self.smt_parser.tuf_to_tree(tuf)              
         tt = TT(self.smt_parser.avail_literal-1)
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
-        formula_cnf = remove_redundant_clauses(formula_cnf)
-        print(formula_cnf)
-        sat, assignment, formula_learnt = self.solve_cnf(formula_cnf, self.smt_parser.var2eq)
-        print(assignment)
+        formula_cnf = remove_redundant_clauses(formula_cnf)        
+        sat, assignment, formula_learnt = self.solve_cnf(formula_cnf, self.smt_parser.var2eq)        
         pos, neg = self.split_pos_neg()
         if sat:
             return sat, pos + [CCP.negate(n) for n in neg]
