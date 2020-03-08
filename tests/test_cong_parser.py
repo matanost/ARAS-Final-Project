@@ -59,7 +59,7 @@ smt_p = SMTSolver.Parser()
 tuf = ["a == b"]
 for t in tuf:
     parsed = smt_p.tuf_to_tree(t)
-    print(str(parsed["tree"]) + "\n" + str(parsed["eq"]))
+    print(str(parsed) + "\n" + str(smt_p.var2eq.values()))
     
 if not PASS:
     print ("FAIL")
