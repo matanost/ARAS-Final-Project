@@ -7,8 +7,10 @@ from CongClosure import Parser as CCP
 from Assignment import Assignment as As
 from CongClosure import CongClosure as CC
 from Preprocess import remove_redundant_clauses
+from LP.linear_programing import linearPrograming
 
 import re
+import numpy as np
 
 class SMTSolver:
     
@@ -50,9 +52,13 @@ class SMTSolver:
                 if self.theory is "TUF":
                     if CCP.is_neq(tuf) :
                         tuf, lit = SMTSolver.Parser.negate(tuf), -lit
-                elif self.theory is "LP":
+                elif self.theory is "LP":                    
                     if any([sign in tuf for sign in [">", "<", "!="]]) and not any([sign in tuf for sign in [">=", "<="]]):
-                        tuf, lit = SMTSolver.Parser.negate(tuf), -lit                    
+                        tuf, lit = SMTSolver.Parser.negate(tuf), -lit
+                    if "==" in tuf:
+                        self.avail_literal -= 1
+                        lhs, op, rhs = CCP.split_tuf_eq(tuf)
+                        return self.tuf_to_tree("({0}<={1})*({0}>={1})".format(lhs, rhs))
                 self.var2eq[abs(lit)] = tuf
                 return TN(None, lit)
             elif bool(match_1op):             
@@ -126,12 +132,57 @@ class SMTSolver:
         if self.theory is "TUF":
             self.cc.enforce_eq(pos)
             return any([self.cc.check_eq(eq) for eq in neg])
-        elif self.theory is "LP": #TODO
-            return self.check_lp(pos + [SMTSolver.Parser.negate(n) for n in neg])
+        elif self.theory is "LP":
+            sat, = self.check_lp(pos + [SMTSolver.Parser.negate(n) for n in neg])
+            return not sat
 
     def check_lp(self, inequalities):
-        resereved_var = "RSVD"
-        
+        matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
+        matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
+        s = linearPrograming(matrix_A, vector_b, vector_c)
+        result = s.simplex_result()
+        print(result)
+        if not isinstance(result, str) and result > 0:
+            sat = True
+        elif result is 'unbounded solution':
+            sat = True
+        else:
+            sat = False
+        assignment = []
+        return sat, assignment
+
+    def convert_to_simplex(self, inequalities):
+        inequalities = [re.sub("\s","", ineq) for ineq in inequalities]
+        RSVD = "RSVD"
+        variables = set()
+        term_regex = "^(-{0,1}\d*)([a-zA-Z_]\w*)$"
+        for ineq in inequalities:
+            for v in list(filter(lambda s: s and re.match(term_regex,s), re.split("[\s=<>!+]", ineq))):
+                variables.add(re.search(term_regex, v).group(2))
+        variables = list(variables)
+        if RSVD in variables:
+            variables.remove(RSVD)
+        variables.append(RSVD)
+        matrix_A = list()
+        vector_b = list()
+        vector_c = [0] * (len(variables)-1) + [1]
+        for ineq in inequalities:
+            split = list(filter(lambda s: s, re.split("[=<>!]", ineq)))
+            bound = int(split[-1])
+            int2str = lambda s: 1 if not s else (-1 if s is "-" else int(s))
+            var_coef = {m.group(2) : int2str(m.group(1)) for m in [re.search(term_regex,t) for t in list(filter(lambda s: s, re.split("[\s+]", split[0])))]}
+            if ">=" in ineq:
+                bound = -bound
+                var_coef = {k : -v  for k,v in var_coef.items()}
+            elif "<" in ineq and "<=" not in ineq:
+                var_coef[RSVD] = 1
+            elif ">" in ineq:
+                bound = -bound
+                var_coef[RSVD] = 1
+                var_coef = {k : -v if not k is RSVD else v for k,v in var_coef.items()}
+            vector_b.append(bound)                            
+            matrix_A.append([0 if v not in var_coef else var_coef[v] for v in variables])         
+        return matrix_A, vector_b, vector_c
         
     def t_prop(self):
         if self.theory is "TUF":

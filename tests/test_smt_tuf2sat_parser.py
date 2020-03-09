@@ -23,6 +23,7 @@ formulas.append("(a==b)*((b)+(c))")
 formulas.append("((a==b)*((b)+(c)))+(a!=b)")
 formulas.append("(a <= b)+(c > d)")
 formulas.append("((a <= b)+(c >= d))*((a > b) + (c < d))")
+formulas.append("((a <= b)+(c >= d))*((a > b) + (c1+c2 < d))")
 
 for f in formulas:
     parser.reset(f)
