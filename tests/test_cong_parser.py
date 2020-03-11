@@ -55,7 +55,7 @@ for p in check_phrases:
         print("Failed, should not be true:" + p)
         PASS = False
 
-smt_p = SMTSolver.Parser()
+smt_p = SMTSolver_Parser()
 tuf = ["a == b"]
 for t in tuf:
     parsed = smt_p.tuf_to_tree(t)

@@ -4,110 +4,16 @@ from CNF_formula import Literal, Clause, Sign
 from Tsetin_transformation import TsetinTransformation as TT
 from Tree import Node as TN
 from CongClosure import Parser as CCP
-from Assignment import Assignment as As
+from Assignment import Assignment
 from CongClosure import CongClosure as CC
 from Preprocess import remove_redundant_clauses
 from LP.linear_programing import linearPrograming
+from SMTSolver_Parser import SMTSolver_Parser
 
 import re
 import numpy as np
 
-class SMTSolver:
-    
-    class Parser:
-
-        def __init__(self):        
-            self.avail_literal = 1
-            self.match_2op_re = "([(].*[)])(\W+)([(].*[)])$"
-            self.match_1op_re = "(-)([(].*[)])$"
-            self.var2eq = dict()
-            self.op_translate = {"+":"OR", "*":"AND", "->":"IF", "<->":"IFF", "-":"NOT"}
-            self.theory = "TUF"
-            
-        def reset(self, tuf):
-            self.avail_literal = 1
-            self.var2eq = dict()
-            self.theory = "TUF"            
-            if any([sign in tuf for sign in ["<", ">"]]):
-                self.theory = "LP"
-
-        def clean_recursion(self, string):
-            if string.startswith("(") and string.endswith(")"):
-                string = string[1:-1]
-            return string.rstrip().strip().replace(" ", "")                
-                
-        def tuf_to_tree(self, tuf):            
-            tuf = tuf.strip().rstrip().replace(" ","")
-            match_2op, match_1op = re.match(self.match_2op_re,tuf), re.match(self.match_1op_re,tuf)
-            if bool(match_1op) and bool(match_2op):
-                raise Exception("Both 2op and 1op matched: tuf=" + tuf)
-            elif not bool(match_1op) and not bool(match_2op):
-                for var, eq in self.var2eq.items():
-                    if eq == tuf:
-                        return TN(None, var)
-                    if eq == SMTSolver.Parser.negate(tuf):
-                        return TN(None, -var)
-                lit = self.avail_literal
-                self.avail_literal += 1
-                if self.theory is "TUF":
-                    if CCP.is_neq(tuf) :
-                        tuf, lit = SMTSolver.Parser.negate(tuf), -lit
-                elif self.theory is "LP":                    
-                    if any([sign in tuf for sign in [">", "<", "!="]]) and not any([sign in tuf for sign in [">=", "<="]]):
-                        tuf, lit = SMTSolver.Parser.negate(tuf), -lit
-                    if "==" in tuf:
-                        self.avail_literal -= 1
-                        lhs, op, rhs = CCP.split_tuf_eq(tuf)
-                        return self.tuf_to_tree("({0}<={1})*({0}>={1})".format(lhs, rhs))
-                self.var2eq[abs(lit)] = tuf
-                return TN(None, lit)
-            elif bool(match_1op):             
-                lhs, op, rhs  = None, match_1op.group(1), match_1op.group(2)
-                right_tree = self.tuf_to_tree(self.clean_recursion(rhs))
-            elif bool(match_2op):
-                terms, p_cnt, gathered = [], 0, ""
-                for c in tuf:
-                    if c in ["(", ")"]:
-                        if (c is "(" and p_cnt == 0) or (c is ")" and p_cnt == 1):
-                            if len(gathered) > 0:
-                                terms.append(gathered)
-                            gathered = ""
-                        else:
-                            gathered += c
-                        p_cnt += (1 if c == "(" else -1)
-                    else:
-                        gathered += c
-                if len(gathered) > 0:
-                    terms.append(gathered)
-                lhs, op, rhs = terms[0], terms[1], terms[2]
-                left_tree, right_tree = self.tuf_to_tree(lhs), self.tuf_to_tree(rhs)
-
-            new_node, equalities = TN(None, self.op_translate[op]), []
-            if rhs:
-                new_node.right_son = right_tree
-                new_node.right_son.parent = new_node
-            if lhs:
-                new_node.left_son = left_tree
-                new_node.left_son.parent = new_node
-            return new_node
-
-        def negate_lp(phrase):
-            if "<=" in phrase:
-                phrase = phrase.replace("<=", ">")
-            elif ">=" in phrase:
-                phrase = phrase.replace(">=", "<")
-            elif ">" in phrase:
-                phrase = phrase.replace(">", "<=")
-            elif "<" in phrase:
-                phrase = phrase.replace("<", ">=")
-            return phrase
-
-        def negate(phrase):
-            if any([sign in phrase for sign in ["<", ">", "<=", ">="]]):
-                return SMTSolver.Parser.negate_lp(phrase)
-            else:
-                return CCP.negate(phrase)     
-                
+class SMTSolver:                        
 
     #===========================================================================================
     #===========================================================================================
@@ -118,7 +24,7 @@ class SMTSolver:
         self.cc = None
         self.var2eq = None
         self.formula = None
-        self.smt_parser = SMTSolver.Parser()
+        self.smt_parser = SMTSolver_Parser()
         self.theory = None
 
     def split_pos_neg(self):
@@ -133,7 +39,7 @@ class SMTSolver:
             self.cc.enforce_eq(pos)
             return any([self.cc.check_eq(eq) for eq in neg])
         elif self.theory is "LP":
-            sat, = self.check_lp(pos + [SMTSolver.Parser.negate(n) for n in neg])
+            sat, = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])
             return not sat
 
     def check_lp(self, inequalities):
@@ -200,7 +106,7 @@ class SMTSolver:
         if RESET:
             self.cc = CC()
             self.cc.create_database(self.phrases)
-            self.a = As(self.formula)
+            self.a = Assignment(self.formula)
             return 
         
     def solve(self, tuf):
@@ -212,7 +118,7 @@ class SMTSolver:
         sat, assignment, formula_learnt = self.solve_cnf(formula_cnf, self.smt_parser.var2eq)
         if sat:
             pos, neg = self.split_pos_neg()            
-            return sat, pos + [SMTSolver.Parser.negate(n) for n in neg] + [p for b,p in self.bool_phrases.items() if b in assignment] + ["-" + p for b,p in self.bool_phrases.items() if -b in assignment]
+            return sat, pos + [SMTSolver_Parser.negate(n) for n in neg] + [p for b,p in self.bool_phrases.items() if b in assignment] + ["-" + p for b,p in self.bool_phrases.items() if -b in assignment]
         return sat, []
 
     def choose_theory(self):
