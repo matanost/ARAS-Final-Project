@@ -10,6 +10,11 @@ from SMTSolver import SMTSolver as SMT
 from CNF_formula import CNF_formula
 
 formulas = list()
+req_result = list()
+results = list()
+fails = set()
+smt = SMT()
+PASS = True
 
 formulas.append("(((x==y)+(x==z))*((f(x)==f(y))+(f(x)==f(z))))*(((f(f(x))==f(f(y)))+(f(f(x))==f(f(z))))*(f(f(f(y)))!=f(f(f(z)))))")
 req_result.append(True)
@@ -29,8 +34,6 @@ req_result.append(False)
 formulas.append("((a)*(-(b))) + (c == d)")
 req_result.append(True)
 
-fails = set()
-smt = SMT()
 for i, f in enumerate(formulas):
     print("Solving f=" + str(f))
     results.append(smt.solve(f))

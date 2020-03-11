@@ -269,10 +269,10 @@ class Assignment:
     def sat_solve(formula):
         smt_parser = SMTP()
         formula_tree = smt_parser.tuf_to_tree(formula)
-        print(formula_tree)
+        #print(formula_tree)
         tt = TT(100) #TODO TT should parse the tree and find the max value.
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
-        return Assignment.cnf_sat_solve(formula_cnf)
+        return Assignment.cnf_sat_solve(formula_cnf), smt_parser.var2eq
     
     @staticmethod
     def cnf_sat_solve(formula):

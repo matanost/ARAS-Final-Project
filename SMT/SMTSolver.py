@@ -17,7 +17,13 @@ class SMTSolver:
 
     #===========================================================================================
     #===========================================================================================
-
+    def is_int(s):
+        try: 
+            int(s)
+            return True
+        except ValueError:
+            return False
+    
     def __init__(self):
         self.phrases = list()
         self.a = None
@@ -29,6 +35,8 @@ class SMTSolver:
 
     def split_pos_neg(self):
         assigned_lits = self.a.get_assignment()
+        print("Num of assigned lits ={}".format([str(lit) for lit in assigned_lits]))
+        print(self.var2eq)
         pos = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and     bool(l.sgn)]
         neg = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and not bool(l.sgn)]
         return pos, neg
@@ -39,12 +47,23 @@ class SMTSolver:
             self.cc.enforce_eq(pos)
             return any([self.cc.check_eq(eq) for eq in neg])
         elif self.theory is "LP":
-            sat, = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])
+            inequalities = pos + [SMTSolver_Parser.negate(n) for n in neg]
+            print("check lp in={}".format(str((pos + [SMTSolver_Parser.negate(n) for n in neg]))))
+            if not inequalities:
+                return False
+            sat, assign = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])
             return not sat
 
     def check_lp(self, inequalities):
+        print(inequalities)
         matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
+        print("matrix_A={}".format(matrix_A))
+        print("vector_b={}".format(vector_b))
+        print("vector_c={}".format(vector_c))          
         matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
+        print("matrix_A={}".format(matrix_A))
+        print("vector_b={}".format(vector_b))
+        print("vector_c={}".format(vector_c))        
         s = linearPrograming(matrix_A, vector_b, vector_c)
         result = s.simplex_result()
         print(result)
@@ -74,9 +93,24 @@ class SMTSolver:
         vector_c = [0] * (len(variables)-1) + [1]
         for ineq in inequalities:
             split = list(filter(lambda s: s, re.split("[=<>!]", ineq)))
-            bound = int(split[-1])
+            if len(split) > 2:
+                raise Exception("Split has too many elements:{}".format(str(split)))
+            if not SMTSolver.is_int(split[1]) and not SMTSolver.is_int(split[0]):
+                raise Exception("Split has no numeric elemet:{}".format(str(split)))
+            if SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+                raise Exception("Split has two numeric elemet:{}".format(str(split)))
+            if not SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+                bound = int(split[0])
+                dot_prod = split[1]
+                if ">" in ineq:
+                    ineq = ineq.replace(">","<")
+                if "<" in ineq:
+                    ineq = ineq.replace("<",">")                    
+            else:
+                bound = int(split[1])
+                dot_prod = split[0]
             int2str = lambda s: 1 if not s else (-1 if s is "-" else int(s))
-            var_coef = {m.group(2) : int2str(m.group(1)) for m in [re.search(term_regex,t) for t in list(filter(lambda s: s, re.split("[\s+]", split[0])))]}
+            var_coef = {m.group(2) : int2str(m.group(1)) for m in [re.search(term_regex,t) for t in list(filter(lambda s: s, re.split("[\s+]", dot_prod)))]}
             if ">=" in ineq:
                 bound = -bound
                 var_coef = {k : -v  for k,v in var_coef.items()}
@@ -98,14 +132,16 @@ class SMTSolver:
                     self.a.decide(Literal(var, Sign.POS))                
                     return True
             return False
-        elif self.theory is "LP": #TODO
+        elif self.theory is "LP":
             return False
             
 
     def reset_assignment(self, RESET=True, clause=None):
         if RESET:
-            self.cc = CC()
-            self.cc.create_database(self.phrases)
+            if self.theory is "TUF":            
+                self.cc = CC()
+                print(self.phrases)
+                self.cc.create_database(self.phrases)
             self.a = Assignment(self.formula)
             return 
         

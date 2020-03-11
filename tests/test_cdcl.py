@@ -38,17 +38,22 @@ for i,f in enumerate(formulas):
 formulas = list()
 formulas.append("((a)*(b))+((-(a))*(c))")
 required_results.append(True)
+formulas.append("((a)*(b))<->((-(a))*(c))")
+required_results.append(True)
+
 
 for i,f in enumerate(formulas):
     print("result for formula :" + str(i) + " = " + str(f))
-    result = Assignment.sat_solve(f)
+    result, values = Assignment.sat_solve(f)
     if result[0]:
         print("SAT")
-        print(str(Clause.create_clause(result[1])))
+        #print(str(Clause.create_clause(result[1])))
+        #print(values)
+        print("{}".format(str([("" if lit in result[1] else "-") + val for lit,val in values.items()])))
     else:
         print("UNSAT")
     result_record.append(bool(result[0]))
-    print("Required result is :" + ("SAT" if required_results[i] else "UNSAT"))
+    print("Required result is :" + ("SAT" if required_results[i] else "UNSAT"))    
     print("\n\n")
 
 

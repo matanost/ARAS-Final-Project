@@ -32,6 +32,7 @@ class SMTSolver_Parser:
         if bool(match_1op) and bool(match_2op):
             raise Exception("Both 2op and 1op matched: tuf=" + tuf)
         elif not bool(match_1op) and not bool(match_2op):
+            tuf = SMTSolver_Parser.standard(tuf)
             for var, eq in self.var2eq.items():
                 if eq == tuf:
                     return TN(None, var)
@@ -47,8 +48,9 @@ class SMTSolver_Parser:
                     tuf, lit = SMTSolver_Parser.negate(tuf), -lit
                 if "==" in tuf:
                     self.avail_literal -= 1
+                    print(tuf)
                     lhs, op, rhs = CCP.split_tuf_eq(tuf)
-                    return self.tuf_to_tree("({0}<={1})*({0}>={1})".format(lhs, rhs))
+                    return self.tuf_to_tree("({0}<={1})*({1}<={0})".format(lhs, rhs))
             self.var2eq[abs(lit)] = tuf
             return TN(None, lit)
         elif bool(match_1op):             
@@ -81,6 +83,15 @@ class SMTSolver_Parser:
             new_node.left_son.parent = new_node
         return new_node
 
+    def standard_lp(phrase):
+        if ">=" in phrase:
+            terms = phrase.split(">=")
+            return terms[1] + "<=" + terms[0]
+        if "<" in phrase and "<=" not in phrase:
+            terms = phrase.split("<")
+            return terms[1] + ">" + terms[0]
+        return phrase
+        
     def negate_lp(phrase):
         if "<=" in phrase:
             phrase = phrase.replace("<=", ">")
@@ -92,6 +103,12 @@ class SMTSolver_Parser:
             phrase = phrase.replace("<", ">=")
         return phrase
 
+    def standard(phrase):
+        if any([sign in phrase for sign in ["<", ">", "<=", ">="]]):
+            return SMTSolver_Parser.standard_lp(phrase)
+        else:
+            return phrase
+        
     def negate(phrase):
         if any([sign in phrase for sign in ["<", ">", "<=", ">="]]):
             return SMTSolver_Parser.negate_lp(phrase)
