@@ -4,6 +4,7 @@ sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
 sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
+sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
 
 from Preprocess import remove_redundant_clauses
 from CNF_formula import CNF_formula, Clause, Literal
@@ -33,6 +34,28 @@ for i,f in enumerate(formulas):
     result_record.append(bool(result[0]))
     print("Required result is :" + ("SAT" if required_results[i] else "UNSAT"))
     print("\n\n")
+
+formulas = list()
+formulas.append("((a)*(b))+((-(a))*(c))")
+required_results.append(True)
+formulas.append("((a)*(b))<->((-(a))*(c))")
+required_results.append(True)
+
+
+for i,f in enumerate(formulas):
+    print("result for formula :" + str(i) + " = " + str(f))
+    result, values = Assignment.sat_solve(f)
+    if result[0]:
+        print("SAT")
+        #print(str(Clause.create_clause(result[1])))
+        #print(values)
+        print("{}".format(str([("" if lit in result[1] else "-") + val for lit,val in values.items()])))
+    else:
+        print("UNSAT")
+    result_record.append(bool(result[0]))
+    print("Required result is :" + ("SAT" if required_results[i] else "UNSAT"))    
+    print("\n\n")
+
 
 print("Required:" + str(required_results))
 print("Output  :"   + str(result_record))

@@ -99,6 +99,9 @@ req_result.append(True)
 formulas.append("(a==b)*(-(a==b))")
 req_result.append(False)
 
+formulas.append("((a)*(-(b))) + (c == d)")
+req_result.append(True)
+
 fails = set()
 smt = SMT()
 for i, f in enumerate(formulas):

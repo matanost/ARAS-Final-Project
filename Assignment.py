@@ -4,6 +4,7 @@ from ConflictAnalysis import impGraph
 from Preprocess import remove_redundant_clauses
 import copy
 from Tsetin_transformation import TsetinTransformation as TT
+from SMTSolver_Parser import SMTSolver_Parser as SMTP
     
 class Assignment:
 
@@ -265,10 +266,13 @@ class Assignment:
         return out
 
     @staticmethod
-    def sat_solve(formula_tree):
+    def sat_solve(formula):
+        smt_parser = SMTP()
+        formula_tree = smt_parser.tuf_to_tree(formula)
+        #print(formula_tree)
         tt = TT(100) #TODO TT should parse the tree and find the max value.
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
-        return Assignment.cnf_sat_solve(formula_cnf)
+        return Assignment.cnf_sat_solve(formula_cnf), smt_parser.var2eq
     
     @staticmethod
     def cnf_sat_solve(formula):
