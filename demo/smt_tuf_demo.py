@@ -61,7 +61,7 @@ for i, f in enumerate(formulas):
     print("SAT("+str(i)+")= " + str(results[i][0]) + ", Assingment("+str(i)+")=" + str(results[i][1]) + "\n")
     if results[i][0] != req_result[i]:
         PASS = False
-        fails.add((2,i))
+        fails.add((i))
 
 if not PASS:
     print ("FAIL")

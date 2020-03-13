@@ -54,22 +54,55 @@ class SMTSolver:
             return not sat
 
     def check_lp(self, inequalities):
-        #print(inequalities)
+        print(inequalities)
         matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
         matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
-        #print("matrix_A={}".format(matrix_A))
-        #print("vector_b={}".format(vector_b))
-        #print("vector_c={}".format(vector_c))        
+        print("matrix_A={}".format(matrix_A))
+        print("vector_b={}".format(vector_b))
+        print("vector_c={}".format(vector_c))        
         result = simplex_result(matrix_A, vector_b, vector_c)
         need_rsvd_var = any([op in ["<",">"] for op in []])
-        #print(result)
-        #print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
+        print(result)
+        print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
         if (not isinstance(result, str) and result > 0) or (result == 'unbounded solution'):
             sat = True
         else:
             sat = False
         assignment = []
         return sat, assignment
+
+    def parse_ineq(ineq):
+        split = list(filter(lambda s: s, re.split("[=<>!]", ineq)))
+        if len(split) > 2:
+            raise Exception("Split has too many elements:{}".format(str(split)))
+        if not SMTSolver.is_int(split[1]) and not SMTSolver.is_int(split[0]):
+            raise Exception("Split has no numeric elemet:{}".format(str(split)))
+        if SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+            raise Exception("Split has two numeric elemet:{}".format(str(split)))
+            
+        if not SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+            bound = int(split[0])
+            dot_prod = split[1]
+            if ">=" in ineq:
+                op = "<="
+            elif "<=" in ineq:
+                op = ">="
+            elif ">" in ineq:
+                op = "<"
+            elif "<" in ineq:
+                    op = ">"
+        else:
+            bound = int(split[1])
+            dot_prod = split[0]
+            if ">=" in ineq:
+                op = ">="
+            elif "<=" in ineq:
+                op = "<="
+            elif ">" in ineq:
+                op = ">"
+            elif "<" in ineq:
+                op = "<"
+        return dot_prod, op, bound
 
     def convert_to_simplex(self, inequalities):
         inequalities = [re.sub("\s","", ineq) for ineq in inequalities]
@@ -87,31 +120,16 @@ class SMTSolver:
         vector_b = list()
         vector_c = [0] * (len(variables)-1) + [1]
         for ineq in inequalities:
-            split = list(filter(lambda s: s, re.split("[=<>!]", ineq)))
-            if len(split) > 2:
-                raise Exception("Split has too many elements:{}".format(str(split)))
-            if not SMTSolver.is_int(split[1]) and not SMTSolver.is_int(split[0]):
-                raise Exception("Split has no numeric elemet:{}".format(str(split)))
-            if SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
-                raise Exception("Split has two numeric elemet:{}".format(str(split)))
-            if not SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
-                bound = int(split[0])
-                dot_prod = split[1]
-                if ">" in ineq:
-                    ineq = ineq.replace(">","<")
-                if "<" in ineq:
-                    ineq = ineq.replace("<",">")                    
-            else:
-                bound = int(split[1])
-                dot_prod = split[0]
+            dot_prod, op, bound = SMTSolver.parse_ineq(ineq)
+            print("Processing:" + dot_prod + op + str(bound))
             int2str = lambda s: 1 if not s else (-1 if s is "-" else int(s))
             var_coef = {m.group(2) : int2str(m.group(1)) for m in [re.search(term_regex,t) for t in list(filter(lambda s: s, re.split("[\s+]", dot_prod)))]}
-            if ">=" in ineq:
+            if op == ">=" :
                 bound = -bound
                 var_coef = {k : -v  for k,v in var_coef.items()}
-            elif "<" in ineq and "<=" not in ineq:
+            elif op == "<":
                 var_coef[RSVD] = 1
-            elif ">" in ineq:
+            elif op == ">":
                 bound = -bound
                 var_coef[RSVD] = 1
                 var_coef = {k : -v if not k is RSVD else v for k,v in var_coef.items()}
