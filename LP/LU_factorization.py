@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg
 
+
 class LU_factorization:
 
     def __init__(self, matrix_B):
@@ -37,7 +38,3 @@ class LU_factorization:
                     self.leaving_vars.append(j)
                     eta[i][j] = np.copy(U_T[i][j])
                     self.eta_matrix.append(np.transpose(eta))
-
-
-
-
