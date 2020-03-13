@@ -7,7 +7,8 @@ from CongClosure import Parser as CCP
 from Assignment import Assignment
 from CongClosure import CongClosure as CC
 from Preprocess import remove_redundant_clauses
-from LP.linear_programing import linearPrograming
+from LP.linear_programing_tools import linearPrograming
+from LP.linear_programing import simplex_result
 from SMTSolver_Parser import SMTSolver_Parser
 
 import re
@@ -64,8 +65,7 @@ class SMTSolver:
         print("matrix_A={}".format(matrix_A))
         print("vector_b={}".format(vector_b))
         print("vector_c={}".format(vector_c))        
-        s = linearPrograming(matrix_A, vector_b, vector_c)
-        result = s.simplex_result()
+        result = simplex_result(matrix_A, vector_b, vector_c)
         print(result)
         if not isinstance(result, str) and result > 0:
             sat = True
