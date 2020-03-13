@@ -53,23 +53,21 @@ class SMTSolver:
             if not inequalities:
                 return False
             sat, assign = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])
+            print("There is T-conflict? :{}".format(str(not sat)))
             return not sat
 
     def check_lp(self, inequalities):
         print(inequalities)
         matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
-        print("matrix_A={}".format(matrix_A))
-        print("vector_b={}".format(vector_b))
-        print("vector_c={}".format(vector_c))          
         matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
         print("matrix_A={}".format(matrix_A))
         print("vector_b={}".format(vector_b))
         print("vector_c={}".format(vector_c))        
         result = simplex_result(matrix_A, vector_b, vector_c)
+        need_rsvd_var = any([op in ["<",">"] for op in []])
         print(result)
-        if not isinstance(result, str) and result > 0:
-            sat = True
-        elif result is 'unbounded solution':
+        print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
+        if (not isinstance(result, str) and result > 0) or (result == 'unbounded solution'):
             sat = True
         else:
             sat = False

@@ -15,6 +15,14 @@ fails = set()
 smt = SMT()
 PASS = True
 
+formulas.append("(a<=4)*(b<=3)")
+req_result.append(True)
+formulas.append("(-a>=-4)*(b<=3)")
+req_result.append(True)
+formulas.append("((3a1 + -a2 + 4a3 <=10)*(a1<=3))*(a2 <= 100)")
+req_result.append(True)
+
+
 formulas.append("(a==4)*(b<=3)")
 req_result.append(True)
 
