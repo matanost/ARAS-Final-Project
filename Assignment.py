@@ -177,10 +177,12 @@ class Assignment:
         if (f_len + 1) != len(self.formula):
             raise Exception("No clause learnt: " + str(learnt_clause) +"\n Old formula=" + str(f_doc) + "\nNew formula=" + str(self.formula) + "\nOriginal conflict=" + str(conf_doc) + "\nExplained=" + str(learnt_clause) + "\nCalculated=" + str(calc_conflict))
     
-    def decide(self, l):
+    def decide(self, l, inc_level=True):
+        #print("Decide + {}".format(l))
         if l is None:
             return
-        self.lvl += 1
+        if inc_level:
+            self.lvl += 1
         self.imp_graph.add_root(l, self.lvl)
         self.last_decision.insert(0,l)
         self.assign_variable(l.x, bool(l.sgn))    
@@ -196,6 +198,7 @@ class Assignment:
                 self.decide(Literal(var,Sign.POS))
 
     def deduce(self, l, clause=None):
+        #print("Deduce + {}".format(l))        
         self.imp_graph.add_literal(l, self.lvl)
         if clause is not None:
             for lit in clause:
@@ -269,8 +272,7 @@ class Assignment:
     def sat_solve(formula):
         smt_parser = SMTP()
         formula_tree = smt_parser.tuf_to_tree(formula)
-        #print(formula_tree)
-        tt = TT(100) #TODO
+        tt = TT(smt_parser.avail_literal-1)
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
         return Assignment.cnf_sat_solve(formula_cnf), smt_parser.var2eq
     

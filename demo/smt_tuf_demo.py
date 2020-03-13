@@ -34,6 +34,27 @@ req_result.append(False)
 formulas.append("((a)*(-(b))) + (c == d)")
 req_result.append(True)
 
+formulas.append("(x!=y)*(f(x)==f(y))")
+req_result.append(True)
+
+formulas.append("(x==g(y,z))->(f(x)==f(g(y,z)))")
+req_result.append(True)
+
+formulas.append("(f(a) == a)*(f(f(a)) != a)")
+req_result.append(False)
+
+formulas.append("(f(f(f(a))) == a)*((f(f(f(f(f(a))))) == a)*(f(a) != a))")
+req_result.append(False)
+
+formulas.append("((f(x1,y1,z1) == f(x2,y2,z2))*(x1 == x2))*((y1 == y2)*(z1 == z2))")
+req_result.append(True)
+
+formulas.append("((f(x1,y1,z1) == f(x2,y2,z2))*(x1 != x2))*((y1 == y2)*(z1 == z2))")
+req_result.append(True)
+
+formulas.append("((f(x1,y1,z1) != f(x2,y2,z2))*(x1 == x2))*((y1 == y2)*(z1 == z2))")
+req_result.append(False)
+
 for i, f in enumerate(formulas):
     print("Solving f=" + str(f))
     results.append(smt.solve(f))

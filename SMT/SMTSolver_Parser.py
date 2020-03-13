@@ -18,7 +18,7 @@ class SMTSolver_Parser:
         self.avail_literal = 1
         self.var2eq = dict()
         self.theory = "TUF"            
-        if any([sign in tuf for sign in ["<", ">"]]):
+        if any([sign in tuf.replace("<->","").replace("->","") for sign in ["<", ">"]]):
             self.theory = "LP"
 
     def clean_recursion(self, string):

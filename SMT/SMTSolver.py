@@ -35,9 +35,7 @@ class SMTSolver:
         self.theory = None
 
     def split_pos_neg(self):
-        assigned_lits = self.a.get_assignment()
-        print("Num of assigned lits ={}".format([str(lit) for lit in assigned_lits]))
-        print(self.var2eq)
+        assigned_lits = self.a.get_assignment()                
         pos = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and     bool(l.sgn)]
         neg = [self.var2eq[l.x] for l in assigned_lits if self.var2eq[l.x] is not None and not bool(l.sgn)]
         return pos, neg
@@ -49,24 +47,23 @@ class SMTSolver:
             return any([self.cc.check_eq(eq) for eq in neg])
         elif self.theory is "LP":
             inequalities = pos + [SMTSolver_Parser.negate(n) for n in neg]
-            print("check lp in={}".format(str((pos + [SMTSolver_Parser.negate(n) for n in neg]))))
+            #print("check lp in={}".format(str((pos + [SMTSolver_Parser.negate(n) for n in neg]))))
             if not inequalities:
                 return False
-            sat, assign = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])
-            print("There is T-conflict? :{}".format(str(not sat)))
+            sat, assign = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])        
             return not sat
 
     def check_lp(self, inequalities):
-        print(inequalities)
+        #print(inequalities)
         matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
         matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
-        print("matrix_A={}".format(matrix_A))
-        print("vector_b={}".format(vector_b))
-        print("vector_c={}".format(vector_c))        
+        #print("matrix_A={}".format(matrix_A))
+        #print("vector_b={}".format(vector_b))
+        #print("vector_c={}".format(vector_c))        
         result = simplex_result(matrix_A, vector_b, vector_c)
         need_rsvd_var = any([op in ["<",">"] for op in []])
-        print(result)
-        print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
+        #print(result)
+        #print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
         if (not isinstance(result, str) and result > 0) or (result == 'unbounded solution'):
             sat = True
         else:
@@ -143,8 +140,8 @@ class SMTSolver:
         if self.theory is "TUF":
             self.cc.enforce_eq(self.split_pos_neg()[0])
             for var in [v for v in self.a.get_unassigned() if self.var2eq[v] is not None]:
-                if self.cc.check_eq(self.var2eq[var]):
-                    self.a.decide(Literal(var, Sign.POS))                
+                if self.cc.check_eq(self.var2eq[var]):                    
+                    self.a.decide(Literal(var, Sign.POS), inc_level=False)                
                     return True
             return False
         elif self.theory is "LP":
@@ -155,13 +152,14 @@ class SMTSolver:
         if RESET:
             if self.theory is "TUF":            
                 self.cc = CC()
-                print(self.phrases)
+                #print(self.phrases)
                 self.cc.create_database(self.phrases)
             self.a = Assignment(self.formula)
             return 
         
     def solve(self, tuf):
         self.smt_parser.reset(tuf)
+        self.theory = self.smt_parser.theory
         formula_tree = self.smt_parser.tuf_to_tree(tuf)
         tt = TT(self.smt_parser.avail_literal-1)
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
@@ -172,18 +170,11 @@ class SMTSolver:
             return sat, pos + [SMTSolver_Parser.negate(n) for n in neg] + [p for b,p in self.bool_phrases.items() if b in assignment] + ["-" + p for b,p in self.bool_phrases.items() if -b in assignment]
         return sat, []
 
-    def choose_theory(self):
-        if any([p is not None and ("<" in p or ">" in p) for p in self.var2eq.values()]):
-            self.theory = "LP"
-            return
-        self.theory = "TUF"
-
     def remove_redundant_phrases(self):
         none_or_bool = lambda p : p is None or all([sign not in p for sign in ["<", ">", "="]])
         self.bool_phrases = {var : eq for var,eq in self.var2eq.items() if none_or_bool(eq) and eq is not None}
         self.var2eq = {var : (None if none_or_bool(eq) else eq) for var,eq in self.var2eq.items()}                    
-
-    def solve_cnf(self, formula, var2eq):
+    def solve_cnf(self, formula, var2eq):       
         varis = set()
         for c in formula:
             for l in c:
@@ -192,10 +183,8 @@ class SMTSolver:
             var2eq[var] = None
         self.var2eq = var2eq
         self.formula = remove_redundant_clauses(formula)
-        self.choose_theory()
         self.remove_redundant_phrases()
         self.phrases = [eq for eq in self.var2eq.values() if eq is not None]
-        print(self.phrases)
         if len(self.formula) == 0:
             return True, []
         self.reset_assignment()
@@ -208,7 +197,7 @@ class SMTSolver:
             else:
                 if self.a.SAT:
                     self.a.decide(Literal(self.a.get_unassigned()[0], Sign.POS))
-                else:
+                else:                    
                     self.a.decide(self.a.get_decision())
             if self.a.UNSAT:
                 break            
