@@ -46,11 +46,24 @@ def homework3_ex1():
         print("fail")
 
 
+def test_unbounded():
+    A = np.array([[1, 0]])
+    b = np.array([3])
+    c = np.array([0, 1])
+    c = c.transpose()
+    s = simplex_result(A, b, c)
+    if s == 'unbounded solution':
+        print("sucssess")
+    else:
+        print("fail")
+
 
 if __name__ == "__main__":
-    homework3_ex1()
     class_example()
     homework3_ex2()
+    test_unbounded()
+    # homework3_ex1()
+
 
 
 
