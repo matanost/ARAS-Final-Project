@@ -58,14 +58,13 @@ class SMTSolver:
     def check_lp(self, inequalities):
         print(inequalities)
         matrix_A, vector_b, vector_c = self.convert_to_simplex(inequalities)
-        print("matrix_A={}".format(matrix_A))
-        print("vector_b={}".format(vector_b))
-        print("vector_c={}".format(vector_c))          
         matrix_A, vector_b, vector_c = np.array(matrix_A), np.array(vector_b), np.array(vector_c).transpose()
         print("matrix_A={}".format(matrix_A))
         print("vector_b={}".format(vector_b))
         print("vector_c={}".format(vector_c))        
         result = simplex_result(matrix_A, vector_b, vector_c)
+#        ineq_wo_eq = 
+        need_rsvd_var = any([op in ["<",">"] for op in []])
         print(result)
         if not isinstance(result, str) and result > 0:
             sat = True
