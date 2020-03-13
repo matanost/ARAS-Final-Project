@@ -121,13 +121,6 @@ class Clause:
     def __next__(self):
         return self.c.__next__()
 
-
-    #def remove(self, l):
-    #    if l in self.c:
-    #        temp_list = list(self.c).remove(l) #TODO
-    #        self.c = frozenset(temp_list)
-    #        self.num_literal -= 1
-
     def __eq__(self, other):
         if not isinstance(other, Clause):                                   
             return False        

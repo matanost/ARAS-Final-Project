@@ -121,6 +121,23 @@ class SMTSolver:
             vector_b.append(bound)                            
             matrix_A.append([0 if v not in var_coef else var_coef[v] for v in variables])         
         return matrix_A, vector_b, vector_c
+
+    #TODO Explain
+    def tuf_explain(self):
+        pos, neg = self.split_pos_neg()
+        cc_explain = CC()
+        cc_explain.create_database(self.phrases)
+        cc_explain.enforce_eq(pos)
+        failing_negs = [n for n in neg if cc_explain.check_eq(n)]
+        cong_class = [(n,[p for p in pos if (cc_explain.find(CCP.split_tuf_eq(p)[0]) == cc_explain.find(CCP.split_tuf_eq(n)[0]))]) for n in failing_negs]
+        min_size_cong = cong_class.sort(key=lambda elem : -len(elem[1]))[0]
+        
+    def t_explain(self):
+        if self.theory is "TUF":
+            #return self.tuf_explain()
+            return Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))
+        elif self.theory is "LP":
+            return Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))
         
     def t_prop(self):
         if self.theory is "TUF":
@@ -196,8 +213,7 @@ class SMTSolver:
             if self.a.UNSAT:
                 break            
             if self.is_t_conflict():
-                #TODO explain
-                new_clause = Clause.create_clause(set([int(-lit) for lit in self.a.get_assignment()]))
+                new_clause = self.t_explain()
                 self.formula.append(new_clause)
                 self.reset_assignment(clause=new_clause)
         if self.a.SAT:
