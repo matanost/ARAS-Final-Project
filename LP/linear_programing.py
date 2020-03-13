@@ -15,7 +15,6 @@ def simplex_result(matrix_A, vector_b, vector_c):
         s = linearPrograming(matrix_A, vector_b, vector_c)
         return s.simplex()
     else:
-
         min_b = vector_b[0]
         min_b_index = 0
         for i in range(len(vector_b)):
@@ -37,11 +36,6 @@ def simplex_result(matrix_A, vector_b, vector_c):
         if res != -1:
             return preprocess.solution[-3]
         elif res == -1:
-            # index_vec = np.hstack((preprocess.non_bases_vars, preprocess.bases_vars))
-            # x_0_index = 0
-            # for i in range(len(index_vec)):
-            #     if index_vec[i] == 1:
-            #         x_0_index = i
             x_max = preprocess.assign()
             if x_max[0] != 0:
                 return preprocess.solution[-3]
