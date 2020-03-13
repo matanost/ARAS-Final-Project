@@ -62,7 +62,7 @@ class linearPrograming:
     def picking_entering_var_dantzig(self, y):
         coefficient = self.cN - np.dot(y,self.AN)
         for i in range(len(coefficient)):
-            if coefficient[i]< self.epsilon:
+            if abs(coefficient[i])< self.epsilon:
                 coefficient[i] = 0
         if self.is_optimal_solution(coefficient):
             return -1
@@ -71,7 +71,7 @@ class linearPrograming:
     def picking_entering_var_bland(self,y):
         coefficient = self.cN - np.dot(y, self.AN)
         for i in range(len(coefficient)):
-            if coefficient[i] < self.epsilon:
+            if abs(coefficient[i]) < self.epsilon:
                 coefficient[i] = 0
         if self.is_optimal_solution(coefficient):
             return -1
@@ -120,7 +120,7 @@ class linearPrograming:
         eta_vector_index = self.leaving_vars[i]
         eta_vector = self.eta_matrix[i][:,eta_vector_index]
         factor = 0
-        if eta_vector[eta_vector_index] > self.epsilon:
+        if abs(eta_vector[eta_vector_index]) > self.epsilon:
             factor = 1 / eta_vector[eta_vector_index]
         for j in range(self.num_rows):
             if j != eta_vector_index:
@@ -148,6 +148,26 @@ class linearPrograming:
                 d[j] = known_result[j]-eta_vector[j]*d[eta_vector_index]
         return d
 
+
+    def clac_optimal_sol(self):
+        x_max = self.assign()
+        pad = np.zeros(self.num_rows)
+        c_new = np.hstack((self.c, pad))
+        return np.dot(c_new, x_max)
+
+    def assign(self):
+        x_max = np.zeros(self.num_rows + self.num_cols)
+        for i in range(self.num_rows):
+            x_max[self.bases_vars[i] - 1] = self.xB[i]
+        return x_max
+
+    def simplex(self):
+        result = self.run_simplex()
+        if result != -1:
+            return self.solution[result]
+        elif result == -1:
+            return self.clac_optimal_sol()
+
     def run_simplex(self):
         #first iteration is different because B=I and cB = 0
         # we don't need FTRAN and BTRAN then
@@ -163,63 +183,22 @@ class linearPrograming:
             return leaving_var
         self.swap_entering_leaving(entering_var, leaving_var)
         self.update_result(leaving_var, d)
+        return self.simplex_iteration(d,leaving_var)
+
+    def simplex_iteration(self, d, leaving_var):
         while True:
             if len(self.eta_matrix) == self.TRESHOLD_ETA:
                 s = LU_factorization(self.Base)
                 self.Base, self.eta_matrix, self.leaving_vars = s.run_LU_factorization()
-            y = self.BTRAN(d,leaving_var)
+            y = self.BTRAN(d, leaving_var)
             entering_var = self.picking_entering_var_bland(y)
             if entering_var < 0:
                 return entering_var
-            a = np.copy(self.AN[:,entering_var])
+            a = np.copy(self.AN[:, entering_var])
             d = self.FTRAN(a)
             leaving_var = self.picking_leaving_var(d)
             if leaving_var < 0:
                 return leaving_var
             self.swap_entering_leaving(entering_var, leaving_var)
-            self.update_result(leaving_var,d)
-
-    # def simplex_result(self):
-    #     if self.is_b_negative:
-    #         min_b = self.b[0]
-    #         for i in self.b:
-    #             if min_b > i:
-    #                 min_b = i
-    #
-    #     result = self.run_simplex()
-    #     if result != -1:
-    #         return self.solution[result]
-    #     elif result == -1:
-    #         x_max = np.zeros(self.num_rows + self.num_cols)
-    #         for i in range(self.num_rows):
-    #             x_max[self.bases_vars[i]-1] = self.xB[i]
-    #         pad = np.zeros(self.num_rows)
-    #         c_new = np.hstack((self.c, pad))
-    #         return np.dot(c_new, x_max)
-    #
-    #
-    #
-    #
-
-
-
-
-    # def negative_b(self):
-
-# def find_basic_vars(self):
-#     num_of_one = 0
-#     flag = 0
-#     is_basic = np.zeros(self.num_cols)
-#     for j in range(self.num_cols):
-#         for i in range(self.num_rows):
-#             if self.A[i][j] == 1:
-#                 num_of_one += 1
-#             elif self.A[i][j] != 0:
-#                 flag = 1
-#                 break
-#         if num_of_one == 1 and flag == 0:
-#             is_basic[j] = 1
-#         flag = 0
-#     return is_basic
-
+            self.update_result(leaving_var, d)
 
