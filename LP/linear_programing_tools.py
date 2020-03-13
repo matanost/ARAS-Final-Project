@@ -57,7 +57,7 @@ class linearPrograming:
         return True
 
     def is_unbounded_solution(self, t_vector):
-        return not np.any(t_vector >= 0)
+        return not np.any(t_vector >0)
 
     def picking_entering_var_dantzig(self, y):
         coefficient = self.cN - np.dot(y,self.AN)
@@ -154,9 +154,13 @@ class linearPrograming:
         # y*Base = cB -> y = 0
         y = np.zeros(self.num_rows)
         entering_var = self.picking_entering_var_bland(y)
+        if entering_var < 0:
+            return entering_var
         # Base*d = a = self.AN[:entering_var] - > d = a
         d = np.copy(self.AN[:,entering_var])
         leaving_var = self.picking_leaving_var(d)
+        if leaving_var < 0:
+            return leaving_var
         self.swap_entering_leaving(entering_var, leaving_var)
         self.update_result(leaving_var, d)
         while True:
