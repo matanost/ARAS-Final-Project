@@ -18,6 +18,9 @@ required_results.append(True)
 formulas.append("((a)*(b))<->((-(a))*(c))")
 required_results.append(True)
 
+formulas.append("((a)*(b))*(((a)*(b))->((-(a))*(c)))")
+required_results.append(False)
+
 formulas.append("((a)->(b))+((-(a))*(c))")
 required_results.append(True)
 
