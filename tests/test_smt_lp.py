@@ -1,7 +1,4 @@
 
-import sys
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-
 from LP.linear_programing import linearPrograming
 from SMT.SMTSolver import SMTSolver as SMT
 from SAT.CNF_formula import CNF_formula

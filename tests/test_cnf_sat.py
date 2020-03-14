@@ -2,10 +2,8 @@
 #sudo apt install zlib1g-dev
 #pip install python-sat
 
-import time
 import sys
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-
+import time
 from SAT.Preprocess import remove_redundant_clauses
 from SAT.CNF_formula import CNF_formula, Clause, Literal
 from SAT.Assignment import Assignment

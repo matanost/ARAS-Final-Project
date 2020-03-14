@@ -1,7 +1,4 @@
 
-import sys
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-
 from SMT.CongClosure import CongClosure as CC
 from SMT.CongClosure import Parser as CCP
 from SMT.SMTSolver_Parser import SMTSolver_Parser

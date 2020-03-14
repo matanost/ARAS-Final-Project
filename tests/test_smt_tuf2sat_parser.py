@@ -1,7 +1,4 @@
 
-import sys
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-
 from SMT.SMTSolver import SMTSolver_Parser as SMTP
 
 PASS = True
