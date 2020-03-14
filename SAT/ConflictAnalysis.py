@@ -1,6 +1,5 @@
 
-import Assignment as A
-from CNF_formula import CNF_formula, Literal, Sign, Clause
+from SAT.CNF_formula import CNF_formula, Literal, Sign, Clause
 import enum
 import copy
 
@@ -112,9 +111,28 @@ class impGraph:
                     first_uip = {"node": n_key, "dist_from_conflict" : dist}
         return first_uip["node"]
 
+    @staticmethod
+    def resolve_clauses(c1, c2, lit):
+        if (lit in c1) and (-lit in c2):
+            pos = c1
+            neg = c2
+        elif (lit in c2) and (-lit in c1):
+            pos = c2
+            neg = c1
+        else:
+            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))        
+        new_clause = Clause()
+        for l in pos:
+            if l != lit:
+                new_clause.append(l)
+        for l in neg:
+            if l != -lit:
+                new_clause.append(l)
+        return new_clause    
+
     #=====================================================================
     #=====================================================================   
-
+    
     def __init__(self, formula):
         self.nodes = dict() 
         self.edges = dict()       
@@ -208,7 +226,7 @@ class impGraph:
                     break
             if len(self.nodes[last_assigned_literal].ingoing_key) > 0:
                 other_clause = self.edges[self.nodes[last_assigned_literal].ingoing_key[0]].clause
-                clause = A.Assignment.resolve_clauses(clause, other_clause, last_assigned_literal)
+                clause = impGraph.resolve_clauses(clause, other_clause, last_assigned_literal)
                 it += 1
             else:
                 raise Exception("Node " + str(self.nodes[last_assigned_literal]) + " has no incoming edges.")

@@ -1,7 +1,7 @@
-from CongClosure import CongClosure as CC
-from CongClosure import Parser as CCP
-from Tree import Node as TN
-from CNF_formula import Literal, Clause, Sign
+from SMT.CongClosure import CongClosure as CC
+from SMT.CongClosure import Parser as CCP
+from SAT.Tree import Node as TN
+from SAT.CNF_formula import Literal, Clause, Sign
 import re
 
 class SMTSolver_Parser:
@@ -18,7 +18,7 @@ class SMTSolver_Parser:
         self.avail_literal = 1
         self.var2eq = dict()
         self.theory = "TUF"            
-        if any([sign in tuf for sign in ["<", ">"]]):
+        if any([sign in tuf.replace("<->","").replace("->","") for sign in ["<", ">"]]):
             self.theory = "LP"
 
     def clean_recursion(self, string):

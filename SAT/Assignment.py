@@ -1,10 +1,10 @@
 
-from CNF_formula import Literal, Sign, Clause, CNF_formula
-from ConflictAnalysis import impGraph
-from Preprocess import remove_redundant_clauses
+from SAT.CNF_formula import Literal, Sign, Clause, CNF_formula
+from SAT.ConflictAnalysis import impGraph
+from SAT.Preprocess import remove_redundant_clauses
 import copy
-from Tsetin_transformation import TsetinTransformation as TT
-from SMTSolver_Parser import SMTSolver_Parser as SMTP
+from SAT.Tsetin_transformation import TsetinTransformation as TT
+from SMT.SMTSolver_Parser import SMTSolver_Parser as SMTP
     
 class Assignment:
 
@@ -15,25 +15,6 @@ class Assignment:
     clause_satisfied : set containing cluase iff it is satisfied by current assignment.
     watch_literals : dict from clauses to literal lists.
     '''
-
-    @staticmethod
-    def resolve_clauses(c1, c2, lit):
-        if (lit in c1) and (-lit in c2):
-            pos = c1
-            neg = c2
-        elif (lit in c2) and (-lit in c1):
-            pos = c2
-            neg = c1
-        else:
-            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))        
-        new_clause = Clause()
-        for l in pos:
-            if l != lit:
-                new_clause.append(l)
-        for l in neg:
-            if l != -lit:
-                new_clause.append(l)
-        return new_clause
 
     def all_var_assigned(self):
         return len(self.var_assign.keys()) == len(self.varis)
@@ -177,10 +158,12 @@ class Assignment:
         if (f_len + 1) != len(self.formula):
             raise Exception("No clause learnt: " + str(learnt_clause) +"\n Old formula=" + str(f_doc) + "\nNew formula=" + str(self.formula) + "\nOriginal conflict=" + str(conf_doc) + "\nExplained=" + str(learnt_clause) + "\nCalculated=" + str(calc_conflict))
     
-    def decide(self, l):
+    def decide(self, l, inc_level=True):
+        #print("Decide + {}".format(l))
         if l is None:
             return
-        self.lvl += 1
+        if inc_level:
+            self.lvl += 1
         self.imp_graph.add_root(l, self.lvl)
         self.last_decision.insert(0,l)
         self.assign_variable(l.x, bool(l.sgn))    
@@ -196,6 +179,7 @@ class Assignment:
                 self.decide(Literal(var,Sign.POS))
 
     def deduce(self, l, clause=None):
+        #print("Deduce + {}".format(l))        
         self.imp_graph.add_literal(l, self.lvl)
         if clause is not None:
             for lit in clause:
@@ -269,8 +253,7 @@ class Assignment:
     def sat_solve(formula):
         smt_parser = SMTP()
         formula_tree = smt_parser.tuf_to_tree(formula)
-        #print(formula_tree)
-        tt = TT(100) #TODO TT should parse the tree and find the max value.
+        tt = TT(smt_parser.avail_literal-1)
         formula_cnf = tt.run_TsetinTransformation(formula_tree)
         return Assignment.cnf_sat_solve(formula_cnf), smt_parser.var2eq
     

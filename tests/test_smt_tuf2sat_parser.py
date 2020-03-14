@@ -1,15 +1,8 @@
 
-import sys
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
-
-from SMTSolver import SMTSolver as SMT
+from SMT.SMTSolver import SMTSolver_Parser as SMTP
 
 PASS = True
-parser = SMT.Parser()
+parser = SMTP()
 formulas = list()
 formulas.append("a!=b")
 formulas.append("a==b")

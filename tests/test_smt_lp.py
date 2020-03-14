@@ -1,15 +1,7 @@
 
-import sys
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/LP")
-
 from LP.linear_programing import linearPrograming
-from SMTSolver import SMTSolver as SMT
-from CNF_formula import CNF_formula
+from SMT.SMTSolver import SMTSolver as SMT
+from SAT.CNF_formula import CNF_formula
 
 #==================================================================================================
 #==================================================================================================

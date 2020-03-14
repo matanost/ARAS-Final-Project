@@ -1,5 +1,5 @@
-from CNF_formula import Literal, CNF_formula
-from CNF_formula import Clause
+from SAT.CNF_formula import Literal, CNF_formula
+from SAT.CNF_formula import Clause
 
 
 class TsetinTransformation:

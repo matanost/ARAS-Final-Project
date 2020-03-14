@@ -1,14 +1,7 @@
 
-import sys
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
-
-from CongClosure import CongClosure as CC
-from CongClosure import Parser as CCP
-from SMTSolver import SMTSolver
+from SMT.CongClosure import CongClosure as CC
+from SMT.CongClosure import Parser as CCP
+from SMT.SMTSolver_Parser import SMTSolver_Parser
 
 print("Check is_function")
 functions = ["x", "f(x)", "f_Afeaf(x1)", "f(x,y)", "f(x,,t)", "f(x,a,s,)", "()", "f(,)x)", "f(x)f"]
