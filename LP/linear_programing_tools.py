@@ -3,7 +3,7 @@ from LP.LU_factorization import LU_factorization
 
 
 class linearPrograming:
-    TRESHOLD_ETA = 100
+    TRESHOLD_ETA = 3
 
 
     def __init__(self, matrix_A, vector_b, vector_c):
@@ -32,6 +32,8 @@ class linearPrograming:
 
         self.eta_matrix = []
         self.leaving_vars = []
+
+        self.is_refactorize = False
 
     def swap_entering_leaving(self, entering_var, leaving_var):
         #update base and AN
@@ -75,9 +77,13 @@ class linearPrograming:
                 coefficient[i] = 0
         if self.is_optimal_solution(coefficient):
             return -1
+        index = self.num_rows+self.num_cols+1
+        index_at_vector = 0
         for i in range(len(coefficient)):
-            if coefficient[i] > 0:
-                return i
+            if coefficient[i] > 0 and self.non_bases_vars[i] < index:
+                index = self.non_bases_vars[i]
+                index_at_vector = i
+        return index_at_vector
 
     def picking_leaving_var(self, d):
         t_vector = np.zeros(d.shape)
@@ -92,6 +98,7 @@ class linearPrograming:
             if t_vector[i] > 0 and min > t_vector[i]:
                 min = t_vector[i]
                 min_index = i
+        self.leaving_vars.append(min_index)
         return min_index
 
 
@@ -105,11 +112,7 @@ class linearPrograming:
         self.xB = self.xB - d_with_t
         self.xB[leaving_var] = t
 
-    def BTRAN(self, d, leaving_var):
-        self.leaving_vars.append(leaving_var)
-        eta = np.identity(self.num_rows)
-        eta[:,leaving_var] = np.copy(d)
-        self.eta_matrix.append(np.copy(eta))
+    def BTRAN(self):
         known_result = self.cB
         for i in range(len(self.leaving_vars)-1, -1 , -1):
             known_result = self.single_BTRAN(known_result,i)
@@ -141,7 +144,9 @@ class linearPrograming:
         d = np.zeros(self.num_rows)
         eta_vector_index = self.leaving_vars[i]
         eta_vector = self.eta_matrix[i][:,eta_vector_index]
-        factor = (1 / eta_vector[eta_vector_index])
+        factor = 0
+        if abs(eta_vector[eta_vector_index]) > self.epsilon:
+            factor = (1 / eta_vector[eta_vector_index])
         d[eta_vector_index] = factor * known_result[eta_vector_index]
         for j in range(self.num_rows):
             if j != eta_vector_index:
@@ -152,7 +157,11 @@ class linearPrograming:
     def clac_optimal_sol(self):
         x_max = self.assign()
         pad = np.zeros(self.num_rows)
-        c_new = np.hstack((self.c, pad))
+        c_new = np.zeros(self.num_rows + self.num_cols)
+        for i in range(len(self.cB)):
+            c_new[self.bases_vars[i]-1] = self.cB[i]
+        for i in range(len(self.cN)):
+            c_new[self.non_bases_vars[i]-1] = self.cN[i]
         return np.dot(c_new, x_max)
 
     def assign(self):
@@ -181,16 +190,16 @@ class linearPrograming:
         leaving_var = self.picking_leaving_var(d)
         if leaving_var < 0:
             return leaving_var
+        eta = np.identity(self.num_rows)
+        eta[:, self.leaving_vars[len(self.leaving_vars) - 1]] = np.copy(d)
+        self.eta_matrix.append(np.copy(eta))
         self.swap_entering_leaving(entering_var, leaving_var)
         self.update_result(leaving_var, d)
-        return self.simplex_iteration(d,leaving_var)
+        return self.simplex_iteration()
 
-    def simplex_iteration(self, d, leaving_var):
+    def simplex_iteration(self):
         while True:
-            if len(self.eta_matrix) == self.TRESHOLD_ETA:
-                s = LU_factorization(self.Base)
-                self.Base, self.eta_matrix, self.leaving_vars = s.run_LU_factorization()
-            y = self.BTRAN(d, leaving_var)
+            y = self.BTRAN()
             entering_var = self.picking_entering_var_bland(y)
             if entering_var < 0:
                 return entering_var
@@ -199,6 +208,13 @@ class linearPrograming:
             leaving_var = self.picking_leaving_var(d)
             if leaving_var < 0:
                 return leaving_var
+            eta = np.identity(self.num_rows)
+            eta[:, self.leaving_vars[len(self.leaving_vars) - 1]] = np.copy(d)
+            self.eta_matrix.append(np.copy(eta))
             self.swap_entering_leaving(entering_var, leaving_var)
             self.update_result(leaving_var, d)
+            if len(self.eta_matrix) >= self.TRESHOLD_ETA and not self.is_refactorize:
+                s = LU_factorization(self.Base)
+                self.eta_matrix, self.leaving_vars = s.run_LU_factorization()
+                self.is_refactorize = True
 

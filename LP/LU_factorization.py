@@ -18,7 +18,8 @@ class LU_factorization:
         P, L, U = scipy.linalg.lu(self.B)
         self.lower_triangle_to_eta(L)
         self.upper_triangle_to_eta(U)
-        return np.dot(scipy.transpose(P), self.B), self.eta_matrix, self.leaving_vars
+        self.eta_matrix[0] = np.dot(P, self.eta_matrix[0])
+        return self.eta_matrix, self.leaving_vars
 
     def lower_triangle_to_eta(self, L):
         for j in range(self.num_cols):
@@ -29,12 +30,28 @@ class LU_factorization:
                     eta[i][j] = np.copy(L[i][j])
                     self.eta_matrix.append(eta)
 
+    def is_equal_vec(self, a, b):
+        for i in range(len(a)):
+            if a[i] != b[i]:
+                return False
+        return True
+
+    def where_is_v(self, eta):
+        for i in range(len(eta)):
+            e = np.zeros((eta.shape[0], 1))
+            e[i] = 1
+            y = np.copy(eta[:,i])
+            if not self.is_equal_vec(y, e):
+                return i
+
     def upper_triangle_to_eta(self, U):
         U_T = np.transpose(U)
         for j in range(self.num_cols-1, -1,-1):
             for i in range(self.num_rows -1, -1,-1):
                 if U_T[i][j] != 0 and not (i == j and U_T[i][j] == 1):
                     eta = np.identity(self.num_rows)
-                    self.leaving_vars.append(j)
                     eta[i][j] = np.copy(U_T[i][j])
-                    self.eta_matrix.append(np.transpose(eta))
+                    x = np.transpose(eta)
+                    k = self.where_is_v(np.copy(x))
+                    self.leaving_vars.append(k)
+                    self.eta_matrix.append(x)
