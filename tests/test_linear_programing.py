@@ -2,7 +2,6 @@
 from LP.linear_programing import simplex_result
 from LP.linear_programing_tools import linearPrograming
 import numpy as np
-from LP.LU_factorization import LU_factorization
 
 def class_example():
     A = np.array([[3, 2, 1, 2],
@@ -59,10 +58,11 @@ def test_unbounded():
 
 
 if __name__ == "__main__":
-    homework3_ex1()
+
     class_example()
     homework3_ex2()
     test_unbounded()
+    homework3_ex1()
 
 
 
