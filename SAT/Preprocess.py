@@ -1,7 +1,7 @@
 
 from itertools import combinations
 import copy
-from CNF_formula import CNF_formula
+from SAT.CNF_formula import CNF_formula
 
 #Remove redundant clauses, either bacuase they are duplication of clauses, or becuase they're tautologies.
 def remove_redundant_clauses(formula):    

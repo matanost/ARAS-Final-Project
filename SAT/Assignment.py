@@ -1,10 +1,10 @@
 
-from CNF_formula import Literal, Sign, Clause, CNF_formula
-from ConflictAnalysis import impGraph
-from Preprocess import remove_redundant_clauses
+from SAT.CNF_formula import Literal, Sign, Clause, CNF_formula
+from SAT.ConflictAnalysis import impGraph
+from SAT.Preprocess import remove_redundant_clauses
 import copy
-from Tsetin_transformation import TsetinTransformation as TT
-from SMTSolver_Parser import SMTSolver_Parser as SMTP
+from SAT.Tsetin_transformation import TsetinTransformation as TT
+from SMT.SMTSolver_Parser import SMTSolver_Parser as SMTP
     
 class Assignment:
 
@@ -15,25 +15,6 @@ class Assignment:
     clause_satisfied : set containing cluase iff it is satisfied by current assignment.
     watch_literals : dict from clauses to literal lists.
     '''
-
-    @staticmethod
-    def resolve_clauses(c1, c2, lit):
-        if (lit in c1) and (-lit in c2):
-            pos = c1
-            neg = c2
-        elif (lit in c2) and (-lit in c1):
-            pos = c2
-            neg = c1
-        else:
-            raise Exception("Attempt to resolve clauses around a wrong literal. c1={} and c2={} literal={}".format(c1,c2,lit))        
-        new_clause = Clause()
-        for l in pos:
-            if l != lit:
-                new_clause.append(l)
-        for l in neg:
-            if l != -lit:
-                new_clause.append(l)
-        return new_clause
 
     def all_var_assigned(self):
         return len(self.var_assign.keys()) == len(self.varis)

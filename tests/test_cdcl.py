@@ -1,14 +1,10 @@
 
 import sys
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
 
-from Preprocess import remove_redundant_clauses
-from CNF_formula import CNF_formula, Clause, Literal
-from Assignment import Assignment
+from SAT.Preprocess import remove_redundant_clauses
+from SAT.CNF_formula import CNF_formula, Clause, Literal
+from SAT.Assignment import Assignment
 
 formulas = list()
 formulas.append(CNF_formula.create_formula([{-1,3},{-3,-1,2},{-3,4},{-4,-2}]))

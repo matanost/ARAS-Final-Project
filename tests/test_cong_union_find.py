@@ -1,13 +1,8 @@
 
 import sys
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project")
-sys.path.append("/cs/usr/matanos/ARAS-Final-Project/tests")
 sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/SMT")
-sys.path.append("/mnt/c/Users/Matan/Documents/ARAS-Final-Project/tests")
 
-
-from CongClosure import CongClosure as CC
+from SMT.CongClosure import CongClosure as CC
 
 N = 10
 keys = [str(chr(ord('a') + i)) for i in range(N)]

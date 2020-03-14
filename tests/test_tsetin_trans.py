@@ -1,6 +1,6 @@
-from Tree import Tree
-from Tsetin_transformation import TsetinTransformation
-from CNF_formula import *
+from SAT.Tree import Tree
+from SAT.Tsetin_transformation import TsetinTransformation
+from SAT.CNF_formula import *
 
 def simple_test_or():
     """

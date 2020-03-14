@@ -1,7 +1,7 @@
-from CongClosure import CongClosure as CC
-from CongClosure import Parser as CCP
-from Tree import Node as TN
-from CNF_formula import Literal, Clause, Sign
+from SMT.CongClosure import CongClosure as CC
+from SMT.CongClosure import Parser as CCP
+from SAT.Tree import Node as TN
+from SAT.CNF_formula import Literal, Clause, Sign
 import re
 
 class SMTSolver_Parser:

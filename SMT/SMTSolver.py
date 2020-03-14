@@ -1,15 +1,15 @@
 
 
-from CNF_formula import Literal, Clause, Sign
-from Tsetin_transformation import TsetinTransformation as TT
-from Tree import Node as TN
-from CongClosure import Parser as CCP
-from Assignment import Assignment
-from CongClosure import CongClosure as CC
-from Preprocess import remove_redundant_clauses
+from SAT.CNF_formula import Literal, Clause, Sign
+from SAT.Tsetin_transformation import TsetinTransformation as TT
+from SAT.Tree import Node as TN
+from SMT.CongClosure import Parser as CCP
+from SAT.Assignment import Assignment
+from SMT.CongClosure import CongClosure as CC
+from SAT.Preprocess import remove_redundant_clauses
 from LP.linear_programing_tools import linearPrograming
 from LP.linear_programing import simplex_result
-from SMTSolver_Parser import SMTSolver_Parser
+from SMT.SMTSolver_Parser import SMTSolver_Parser
 
 import re
 import numpy as np
