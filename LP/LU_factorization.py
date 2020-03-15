@@ -18,8 +18,9 @@ class LU_factorization:
         P, L, U = scipy.linalg.lu(self.B)
         self.lower_triangle_to_eta(L)
         self.upper_triangle_to_eta(U)
-        self.eta_matrix[0] = np.dot(P, self.eta_matrix[0])
-        return self.eta_matrix, self.leaving_vars
+        # self.eta_matrix[0] = np.dot(P, self.eta_matrix[0])
+        # p is unitary matrix then p^-1 = p^t
+        return np.transpose(P), self.eta_matrix, self.leaving_vars
 
     def lower_triangle_to_eta(self, L):
         for j in range(self.num_cols):
