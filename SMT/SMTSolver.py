@@ -7,7 +7,7 @@ from SMT.CongClosure import Parser as CCP
 from SAT.Assignment import Assignment
 from SMT.CongClosure import CongClosure as CC
 from SAT.Preprocess import remove_redundant_clauses
-from LP.linear_programing_tools import linearPrograming
+from LP.linear_programing_tools import linear_Programing
 from LP.linear_programing import simplex_result
 from SMT.SMTSolver_Parser import SMTSolver_Parser
 
