@@ -4,7 +4,7 @@ from LP.LU_factorization import LU_factorization
 
 class linear_Programing:
 
-    TRESHOLD_ETA = 100
+    TRESHOLD_ETA = 3
 
     def __init__(self, matrix_A, vector_b, vector_c):
         self.epsilon = 0.01
@@ -184,6 +184,8 @@ class linear_Programing:
         #first iteration is different because B=I and cB = 0
         # we don't need FTRAN and BTRAN then
         # y*Base = cB -> y = 0
+
+
         y = np.zeros(self.num_rows)
         entering_var = self.picking_entering_var_bland(y)
         if entering_var < 0:
@@ -196,8 +198,9 @@ class linear_Programing:
         self.eta(d)
         self.swap_entering_leaving(entering_var, leaving_var)
         self.update_result(leaving_var, d)
-        return self.simplex_iteration()
+        return self.simplex_iteration
 
+    @property
     def simplex_iteration(self):
         while True:
             y = self.BTRAN()
@@ -212,6 +215,6 @@ class linear_Programing:
             self.eta(d)
             self.swap_entering_leaving(entering_var, leaving_var)
             self.update_result(leaving_var, d)
-            if len(self.eta_matrix) >= self.TRESHOLD_ETA and len(self.p) == 0:
+            if (len(self.eta_matrix) >= self.TRESHOLD_ETA and len(self.p) == 0) or not((np.dot(self.xB, self.Base) == self.b).all()):
                 s = LU_factorization(self.Base)
                 self.p, self.eta_matrix, self.leaving_vars = s.run_LU_factorization()
