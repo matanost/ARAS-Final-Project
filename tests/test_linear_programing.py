@@ -1,7 +1,8 @@
 
 from LP.linear_programing import simplex_result
-from LP.linear_programing_tools import linearPrograming
 import numpy as np
+
+TOLERANCE = 0.001
 
 def class_example():
     A = np.array([[3, 2, 1, 2],
@@ -11,7 +12,7 @@ def class_example():
     c = np.array([19, 13, 12, 17])
     c = c.transpose()
     s = simplex_result(A, b, c)
-    if s == 1827:
+    if s < 1827 + TOLERANCE and s > 1827 - TOLERANCE:
         print("sucssess")
     else:
         print("fail")
