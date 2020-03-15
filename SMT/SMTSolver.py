@@ -18,11 +18,11 @@ class SMTSolver:
 
     #===========================================================================================
     #===========================================================================================
-    def is_int(s):
+    def is_number(s):
         try: 
-            int(s)
+            float(s)
             return True
-        except ValueError:
+        except :
             return False
     
     def __init__(self):
@@ -64,23 +64,37 @@ class SMTSolver:
         need_rsvd_var = any([op in ["<",">"] for op in []])
         print(result)
         print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
-        if (not isinstance(result, str) and result > 0) or (result == 'unbounded solution'):
-            sat = True
+        if SMTSolver.is_number(result):
+            print("Here 0")
+            sat = result > 0
+            assignment = []
+        elif isinstance(result,str):
+            print("Here 1")            
+            sat = result == 'unbounded solution'
+            print("SAT={}".format(sat))
+            assignment = []            
+        elif len(result) > 1:
+            print("Here 2")            
+            result = list(result)
+            sat = result[-1] > 0
+            assignment = result[:-1]
         else:
+            print("Here 3")            
             sat = False
-        assignment = []
+            assignment = []
+        print("SAT={}".format(sat))            
         return sat, assignment
 
     def parse_ineq(ineq):
         split = list(filter(lambda s: s, re.split("[=<>!]", ineq)))
         if len(split) > 2:
             raise Exception("Split has too many elements:{}".format(str(split)))
-        if not SMTSolver.is_int(split[1]) and not SMTSolver.is_int(split[0]):
+        if not SMTSolver.is_number(split[1]) and not SMTSolver.is_number(split[0]):
             raise Exception("Split has no numeric elemet:{}".format(str(split)))
-        if SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+        if SMTSolver.is_number(split[1]) and SMTSolver.is_number(split[0]):
             raise Exception("Split has two numeric elemet:{}".format(str(split)))
             
-        if not SMTSolver.is_int(split[1]) and SMTSolver.is_int(split[0]):
+        if not SMTSolver.is_number(split[1]) and SMTSolver.is_number(split[0]):
             bound = int(split[0])
             dot_prod = split[1]
             if ">=" in ineq:
