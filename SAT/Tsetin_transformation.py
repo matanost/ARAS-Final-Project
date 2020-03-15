@@ -12,31 +12,6 @@ class TsetinTransformation:
         self.var_name += 1
         return self.var_name
 
-    # def from_iff_to_cnf(self, x, y):
-    #     c1 = Clause()
-    #     c2 = Clause()
-    #     c1.append(-x)
-    #     c1.append(y)
-    #     c2.append(x)
-    #     c2.append(-y)
-    #     sub_f = CNF_formula()
-    #     sub_f.append(c1)
-    #     sub_f.append(c2)
-    #     return sub_f
-
-
-    # def base_case(self, literal):
-    #     """
-    #
-    #     :param literal:
-    #     :return:
-    #     """
-    #     g = Literal(self.generate_name())
-    #     c = Clause()
-    #
-    #     c.append(self.from_iff_to_cnf(g, literal))
-    #     self.f.append(c)
-    #     return g
 
     def or_clause(self, tseitin_literal_x, tseitin_literal_y):
         g = Literal(self.generate_name())
@@ -177,10 +152,3 @@ class TsetinTransformation:
         c.append(self.var_name)
         self.f.append(c)
         return self.f
-
-
-
-
-
-
-
