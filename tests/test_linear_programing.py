@@ -57,9 +57,20 @@ def test_unbounded():
     else:
         print("fail")
 
+def matan_test():
+    A = np.array([[1, 0], [-1,0]])
+    b = np.array([4,-4])
+    c = np.array([0, 1])
+    c = c.transpose()
+    s = simplex_result(A, b, c)
+    if s == 'unbounded solution':
+        print("sucssess")
+    else:
+        print("fail")
+
 
 if __name__ == "__main__":
-
+    matan_test()
     class_example()
     homework3_ex2()
     test_unbounded()
