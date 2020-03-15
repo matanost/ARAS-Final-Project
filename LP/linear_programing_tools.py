@@ -92,7 +92,7 @@ class linear_Programing:
         min = t_vector[0]
         min_index = 0
         for i in range(len(t_vector)):
-            if (t_vector[i] > 0 and min > t_vector[i]) or (t_vector[i] > 0 and min < 0):
+            if (t_vector[i] > 0 and min >= t_vector[i]) or (t_vector[i] > 0 and min < 0):
                 min = t_vector[i]
                 min_index = i
         self.leaving_vars.append(min_index)
