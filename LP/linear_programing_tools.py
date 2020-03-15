@@ -4,7 +4,7 @@ from LP.LU_factorization import LU_factorization
 
 class linear_Programing:
 
-    TRESHOLD_ETA = 3
+    TRESHOLD_ETA = 100
 
     def __init__(self, matrix_A, vector_b, vector_c):
         self.epsilon = 0.01

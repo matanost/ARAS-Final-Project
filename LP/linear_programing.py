@@ -71,5 +71,4 @@ def simplex_result(matrix_A, vector_b, vector_c):
             return preprocess.solution[res]
         elif res == -1:
             x_max = preprocess.assign()
-            if x_max[0] != 0:
-                return preprocess.solution[-3]
+            return x_max
