@@ -91,10 +91,17 @@ class linear_Programing:
             return -2
         min = t_vector[0]
         min_index = 0
-        for i in range(len(t_vector)):
-            if (t_vector[i] > 0 and min >= t_vector[i]) or (t_vector[i] > 0 and min < 0):
-                min = t_vector[i]
-                min_index = i
+        if self.bases_vars[0] == 1:
+            for i in range(len(t_vector)):
+                if (t_vector[i] > 0 and min > t_vector[i]) or (t_vector[i] > 0 and min < 0) :
+                    min = t_vector[i]
+                    min_index = i
+        else:
+            for i in range(len(t_vector)):
+                if (t_vector[i] > 0 and min >= t_vector[i]) or (t_vector[i] > 0 and min < 0) :
+                    min = t_vector[i]
+                    min_index = i
+
         self.leaving_vars.append(min_index)
         return min_index
 
@@ -198,9 +205,8 @@ class linear_Programing:
         self.eta(d)
         self.swap_entering_leaving(entering_var, leaving_var)
         self.update_result(leaving_var, d)
-        return self.simplex_iteration
+        return self.simplex_iteration()
 
-    @property
     def simplex_iteration(self):
         while True:
             y = self.BTRAN()

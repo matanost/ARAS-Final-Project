@@ -48,7 +48,7 @@ def simplex_result(matrix_A, vector_b, vector_c):
         preprocess.eta_matrix.append(np.copy(eta))
         preprocess.swap_entering_leaving(0, leaving_var)
         preprocess.update_result(leaving_var, d)
-        res = preprocess.simplex_iteration
+        res = preprocess.simplex_iteration()
         if res != -1:
             return preprocess.solution[res]
         elif res == -1:
@@ -66,7 +66,7 @@ def simplex_result(matrix_A, vector_b, vector_c):
             s.swap_entering_leaving(entering_vars[i][1],leaving_vars[i][1]-s.num_cols)
         for i in range(len(s.bases_vars)):
             s.xB[i] = x_max[s.bases_vars[i]]
-        res = s.simplex_iteration
+        res = s.simplex_iteration()
         if res != -1:
             return preprocess.solution[res]
         elif res == -1:
