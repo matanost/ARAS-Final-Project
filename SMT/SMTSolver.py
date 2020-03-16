@@ -47,7 +47,6 @@ class SMTSolver:
             return any([self.cc.check_eq(eq) for eq in neg])
         elif self.theory is "LP":
             inequalities = pos + [SMTSolver_Parser.negate(n) for n in neg]
-            #print("check lp in={}".format(str((pos + [SMTSolver_Parser.negate(n) for n in neg]))))
             if not inequalities:
                 return False
             sat, assign = self.check_lp(pos + [SMTSolver_Parser.negate(n) for n in neg])        
@@ -62,27 +61,21 @@ class SMTSolver:
         print("vector_c={}".format(vector_c))        
         result = simplex_result(matrix_A, vector_b, vector_c)
         need_rsvd_var = any([op in ["<",">"] for op in []])
-        print(result)
-        print("Result is unbounded?:{}".format(str(result == 'unbounded solution')))
+        print("Result=" + str(result))
         if SMTSolver.is_number(result):
-            print("Here 0")
             sat = result > 0
             assignment = []
         elif isinstance(result,str):
-            print("Here 1")            
             sat = result == 'unbounded solution'
-            print("SAT={}".format(sat))
             assignment = []            
         elif len(result) > 1:
-            print("Here 2")            
             result = list(result)
             sat = result[-1] > 0
             assignment = result[:-1]
         else:
-            print("Here 3")            
             sat = False
             assignment = []
-        print("SAT={}".format(sat))            
+        print("SAT={} --> {}\n".format(sat, "No LP T-Conflict" if sat else "LP T-Conflict"))
         return sat, assignment
 
     def parse_ineq(ineq):

@@ -49,7 +49,7 @@ formulas.append("((f(x1,y1,z1) != f(x2,y2,z2))*(x1 == x2))*((y1 == y2)*(z1 == z2
 req_result.append(False)
 
 for i, f in enumerate(formulas):
-    print("Solving f=" + str(f))
+    print("Solving formula=" + str(f))
     results.append(smt.solve(f))
     print("SAT("+str(i)+")= " + str(results[i][0]) + ", Assingment("+str(i)+")=" + str(results[i][1]) + "\n")
     if results[i][0] != req_result[i]:

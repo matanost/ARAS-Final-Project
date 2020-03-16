@@ -22,14 +22,8 @@ req_result.append(True)
 formulas.append("(a<=4)+(4<=a)")
 req_result.append(True)
 
-formulas.append("(a==4)*(b<=3)")
-req_result.append(True)
-
-formulas.append("(c<1)*(1<c)")
-req_result.append(False)
-
 for i, f in enumerate(formulas):
-    print("Solving f=" + str(f))
+    print("Solving formula=" + str(f))
     results.append(smt.solve(f))
     print("SAT("+str(i)+")= " + str(results[i][0]) + ", Assingment("+str(i)+")=" + str(results[i][1]) + "\n")
     if results[i][0] != req_result[i]:
