@@ -1,5 +1,6 @@
 
-from LP.linear_programing import simplex_result
+# from LP.linear_programing import simplex_result
+import LP.linear_programing as lp
 import numpy as np
 
 TOLERANCE = 0.001
@@ -11,7 +12,7 @@ def class_example():
     b = np.array([225, 117, 420])
     c = np.array([19, 13, 12, 17])
     c = c.transpose()
-    s = simplex_result(A, b, c)
+    s = lp.simplex_result(A, b, c)
     if s < 1827 + TOLERANCE and s > 1827 - TOLERANCE:
         print("sucssess")
     else:
@@ -25,7 +26,7 @@ def homework3_ex2():
     b = np.array([4, 5, 7])
     c = np.array([3, 2, 4])
     c = c.transpose()
-    s = simplex_result(A, b, c)
+    s = lp.simplex_result(A, b, c)
     if s == 10.5:
         print("sucssess")
     else:
@@ -39,7 +40,7 @@ def homework3_ex1():
     b = np.array([-1, -6, 2])
     c = np.array([1, 3])
     c = c.transpose()
-    s = simplex_result(A, b, c)
+    s = lp.simplex_result(A, b, c)
     if s == 'unbounded solution':
         print("sucssess")
     else:
@@ -51,18 +52,42 @@ def test_unbounded():
     b = np.array([3])
     c = np.array([0, 1])
     c = c.transpose()
-    s = simplex_result(A, b, c)
+    s = lp.simplex_result(A, b, c)
     if s == 'unbounded solution':
         print("sucssess")
     else:
         print("fail")
 
-def matan_test():
+def test_unbounded1():
     A = np.array([[1, 0], [-1,0]])
     b = np.array([4,-4])
     c = np.array([0, 1])
     c = c.transpose()
-    s = simplex_result(A, b, c)
+    s = lp.simplex_result(A, b, c)
+    if s == 'unbounded solution':
+        print("sucssess")
+    else:
+        print("fail")
+
+
+def test_unbounded2():
+    A = np.array([[-1, 1], [1, 1]])
+    c = np.array([0, 1])
+    c = c.transpose()
+    b = np.array([-1, 1])
+    s = lp.simplex_result(A, b, c)
+    if s == 0:
+        print("sucssess")
+    else:
+        print("fail")
+
+
+def test_unbounded5():
+    A = np.array([[-1, 0, 0], [0 ,1, 0]])
+    b = np.array([-4,3])
+    c = np.array([0, 0, 1])
+    c = c.transpose()
+    s = lp.simplex_result(A, b, c)
     if s == 'unbounded solution':
         print("sucssess")
     else:
@@ -70,7 +95,9 @@ def matan_test():
 
 
 if __name__ == "__main__":
-    matan_test()
+    test_unbounded5()
+    test_unbounded2()
+    test_unbounded1()
     class_example()
     homework3_ex2()
     test_unbounded()
