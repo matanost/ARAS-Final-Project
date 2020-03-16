@@ -1,5 +1,5 @@
 
-from LP.linear_programing import linearPrograming
+from LP.linear_programing import linear_Programing
 from SMT.SMTSolver import SMTSolver as SMT
 from SAT.CNF_formula import CNF_formula
 
