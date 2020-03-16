@@ -53,8 +53,6 @@ def simplex_result(matrix_A, vector_b, vector_c):
         preprocess.update_result(leaving_var, d)
         res = preprocess.simplex_iteration()
         if res != -1:
-            if res == -2 and preprocess.is_zero_sulotion():
-                return 0
             return preprocess.solution[res]
         elif res == -1:
             x_max = preprocess.assign()
@@ -69,8 +67,6 @@ def simplex_result(matrix_A, vector_b, vector_c):
             s.xB[i] = x_max[s.bases_vars[i]]
         res = s.simplex_iteration()
         if res != -1:
-            if res == -2 and s.is_zero_sulotion():
-                return 0
             return preprocess.solution[res]
         elif res == -1:
             return s.clac_optimal_sol()

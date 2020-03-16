@@ -182,8 +182,6 @@ class linear_Programing:
     def simplex(self):
         result = self.run_simplex()
         if result != -1:
-            if result == -2 and self.is_zero_sulotion():
-                return 0
             return self.solution[result]
         elif result == -1:
             return self.clac_optimal_sol()
@@ -193,29 +191,6 @@ class linear_Programing:
         eta[:, self.leaving_vars[len(self.leaving_vars) - 1]] = np.copy(d)
         self.eta_matrix.append(np.copy(eta))
 
-
-    def is_zero_sulotion(self):
-
-        x = np.zeros(self.c.shape)
-        for i in range(len(self.c)):
-            if self.c[i] != 0:
-                x[i] = 1
-        y = []
-        for i in range(len(x)):
-            if len(self.b) > i:
-                y.append(x[i]*self.b[i])
-            if len(self.b)-1 < i:
-                return False
-        for j in range(len(x)):
-            if x[j] != 0:
-                if len(self.b) > j:
-                    if 0 <= y[i]:
-                        continue
-                    else:
-                        return False
-                else:
-                    return False
-        return True
 
     def run_simplex(self):
         #first iteration is different because B=I and cB = 0
