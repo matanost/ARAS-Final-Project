@@ -22,10 +22,10 @@ class linear_Programing:
         self.non_bases_vars = np.arange(start=1, stop=self.num_cols+1)
         self.bases_vars = np.arange(start=self.num_cols+1,
                                         stop=self.num_cols+1+self.num_rows)
-        self.AN = self.A
+        self.AN = np.copy(matrix_A)
         self.cN = np.copy(vector_c)
         self.cB = np.zeros(self.num_rows)
-        self.xB = self.b
+        self.xB = np.copy(vector_b)
 
         self.eta_matrix = []
         self.leaving_vars = []
@@ -49,6 +49,13 @@ class linear_Programing:
         self.bases_vars[leaving_var] = entering_var_index
         self.non_bases_vars[entering_var] = leaving_var_index
 
+
+    def is_x1_in_the_Base(self):
+        for i in range(len(self.Base)):
+            if self.bases_vars[i] == 1:
+                return i
+        return -1
+
     def is_optimal_solution(self, coefficient):
         for i in coefficient:
             if i > 0:
@@ -56,7 +63,7 @@ class linear_Programing:
         return True
 
     def is_unbounded_solution(self, t_vector):
-        return not np.any(t_vector >0)
+        return not np.any(t_vector > 0)
 
     def picking_entering_var_dantzig(self, y):
         coefficient = self.cN - np.dot(y,self.AN)
@@ -91,17 +98,14 @@ class linear_Programing:
             return -2
         min = t_vector[0]
         min_index = 0
-        if self.bases_vars[0] == 1:
-            for i in range(len(t_vector)):
-                if (t_vector[i] > 0 and min > t_vector[i]) or (t_vector[i] > 0 and min < 0) :
-                    min = t_vector[i]
-                    min_index = i
-        else:
-            for i in range(len(t_vector)):
-                if (t_vector[i] > 0 and min >= t_vector[i]) or (t_vector[i] > 0 and min < 0) :
-                    min = t_vector[i]
-                    min_index = i
-
+        for i in range(len(t_vector)):
+            if (t_vector[i] > 0 and min >= t_vector[i]) or (t_vector[i] > 0 and min < 0) :
+                min = t_vector[i]
+                min_index = i
+            index_x1 = self.is_x1_in_the_Base()
+            if index_x1 > -1:
+                if t_vector[index_x1] == min:
+                    min_index = index_x1
         self.leaving_vars.append(min_index)
         return min_index
 
@@ -178,6 +182,8 @@ class linear_Programing:
     def simplex(self):
         result = self.run_simplex()
         if result != -1:
+            if result == -2 and self.is_zero_sulotion():
+                return 0
             return self.solution[result]
         elif result == -1:
             return self.clac_optimal_sol()
@@ -187,12 +193,34 @@ class linear_Programing:
         eta[:, self.leaving_vars[len(self.leaving_vars) - 1]] = np.copy(d)
         self.eta_matrix.append(np.copy(eta))
 
+
+    def is_zero_sulotion(self):
+
+        x = np.zeros(self.c.shape)
+        for i in range(len(self.c)):
+            if self.c[i] != 0:
+                x[i] = 1
+        y = []
+        for i in range(len(x)):
+            if len(self.b) > i:
+                y.append(x[i]*self.b[i])
+            if len(self.b)-1 < i:
+                return False
+        for j in range(len(x)):
+            if x[j] != 0:
+                if len(self.b) > j:
+                    if 0 <= y[i]:
+                        continue
+                    else:
+                        return False
+                else:
+                    return False
+        return True
+
     def run_simplex(self):
         #first iteration is different because B=I and cB = 0
         # we don't need FTRAN and BTRAN then
         # y*Base = cB -> y = 0
-
-
         y = np.zeros(self.num_rows)
         entering_var = self.picking_entering_var_bland(y)
         if entering_var < 0:
@@ -221,6 +249,6 @@ class linear_Programing:
             self.eta(d)
             self.swap_entering_leaving(entering_var, leaving_var)
             self.update_result(leaving_var, d)
-            if (len(self.eta_matrix) >= self.TRESHOLD_ETA and len(self.p) == 0) or not((np.dot(self.xB, self.Base) == self.b).all()):
+            if (len(self.eta_matrix) >= self.TRESHOLD_ETA and len(self.p) == 0):
                 s = LU_factorization(self.Base)
                 self.p, self.eta_matrix, self.leaving_vars = s.run_LU_factorization()
