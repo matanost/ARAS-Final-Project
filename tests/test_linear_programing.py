@@ -70,18 +70,6 @@ def test_unbounded1():
         print("fail")
 
 
-def test_unbounded2():
-    A = np.array([[-1, 1], [1, 1]])
-    c = np.array([0, 1])
-    c = c.transpose()
-    b = np.array([-1, 1])
-    s = lp.simplex_result(A, b, c)
-    if s == 0:
-        print("sucssess")
-    else:
-        print("fail")
-
-
 def test_unbounded5():
     A = np.array([[-1, 0, 0], [0 ,1, 0]])
     b = np.array([-4,3])
@@ -94,9 +82,20 @@ def test_unbounded5():
         print("fail")
 
 
+def test_unbounded6():
+    A = np.array([[1, 0, 0],[-1 ,0, 0], [0,1,0]])
+    b = np.array([4,-4,3])
+    c = np.array([0, 0, 1])
+    c = c.transpose()
+    s = lp.simplex_result(A, b, c)
+    if s == 'unbounded solution':
+        print("sucssess")
+    else:
+        print("fail")
+
 if __name__ == "__main__":
+    test_unbounded6()
     test_unbounded5()
-    test_unbounded2()
     test_unbounded1()
     class_example()
     homework3_ex2()

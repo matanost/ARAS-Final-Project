@@ -59,7 +59,6 @@ def test_unbounded():
 
 
 if __name__ == "__main__":
-
     class_example()
     homework3_ex2()
     test_unbounded()
